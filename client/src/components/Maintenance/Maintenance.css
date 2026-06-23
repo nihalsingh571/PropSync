@@ -1,0 +1,229 @@
+/* ── Maintenance Components CSS ─────────────────────────────────────────────── */
+
+/* ── Maintenance Card ────────────────────────────────────────────────────────── */
+.maint-card {
+  background: var(--surface, #1e293b);
+  border: 1px solid var(--border, #334155);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.maint-card:hover {
+  box-shadow: 0 6px 24px rgba(0,0,0,0.3);
+  transform: translateY(-2px);
+}
+
+.maint-card--compact { border-radius: 10px; }
+
+/* Priority colour strip on left edge */
+.maint-card__priority-strip {
+  width: 4px;
+  flex-shrink: 0;
+  border-radius: 14px 0 0 14px;
+}
+
+.maint-card__body { padding: 1.1rem 1.25rem; flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+
+.maint-card__header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem; }
+
+.maint-card__category { font-size: 0.8rem; color: #94a3b8; }
+
+.maint-card__badges { display: flex; gap: 0.4rem; align-items: center; }
+
+.priority-badge {
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.maint-card__title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary, #f1f5f9);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.maint-card__desc {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.maint-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.2rem;
+}
+
+.meta-item { font-size: 0.75rem; color: #64748b; }
+
+/* ── Maintenance Form ────────────────────────────────────────────────────────── */
+.maint-form { display: flex; flex-direction: column; gap: 1.25rem; }
+
+/* ── Timeline ────────────────────────────────────────────────────────────────── */
+.timeline { display: flex; flex-direction: column; gap: 0; }
+
+.timeline-item {
+  display: flex;
+  gap: 0.75rem;
+  padding-bottom: 1.25rem;
+  position: relative;
+}
+
+.timeline-item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 18px;
+  bottom: 0;
+  width: 2px;
+  background: var(--border, #334155);
+}
+
+.timeline-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #334155;
+  border: 2px solid #475569;
+  flex-shrink: 0;
+  margin-top: 3px;
+  z-index: 1;
+}
+
+.timeline-item--latest .timeline-dot {
+  background: #4f46e5;
+  border-color: #818cf8;
+  box-shadow: 0 0 8px rgba(79,70,229,0.5);
+}
+
+.timeline-content { flex: 1; min-width: 0; }
+
+.timeline-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.25rem;
+}
+
+.timeline-actor { font-size: 0.78rem; color: #94a3b8; }
+.timeline-date  { font-size: 0.72rem; color: #64748b; margin-left: auto; }
+.timeline-note  { font-size: 0.82rem; color: #94a3b8; margin: 0; line-height: 1.5; }
+
+/* ── Assign Staff Modal ───────────────────────────────────────────────────────── */
+.staff-list { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.staff-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 10px;
+  border: 2px solid var(--border, #334155);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+}
+
+.staff-option:hover { border-color: #4f46e5; background: rgba(79,70,229,0.05); }
+.staff-option.selected { border-color: #4f46e5; background: rgba(79,70,229,0.1); }
+
+.staff-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-weight: 700; font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.staff-name  { font-weight: 600; color: #f1f5f9; font-size: 0.875rem; }
+.staff-email { font-size: 0.75rem; color: #94a3b8; }
+
+/* ── Status Stepper ──────────────────────────────────────────────────────────── */
+.status-stepper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.stepper-step {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+.stepper-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #334155;
+  border: 2px solid #475569;
+}
+
+.stepper-step.done .stepper-dot { background: #4f46e5; border-color: #818cf8; }
+.stepper-step.current .stepper-dot { background: #10b981; border-color: #34d399; box-shadow: 0 0 6px rgba(16,185,129,0.5); }
+
+.stepper-line {
+  width: 30px; height: 2px;
+  background: #334155;
+  flex-shrink: 0;
+}
+
+.stepper-step.done .stepper-line { background: #4f46e5; }
+
+.stepper-label {
+  font-size: 0.65rem;
+  color: #64748b;
+  position: absolute;
+  top: 14px;
+  white-space: nowrap;
+}
+
+/* ── Maintenance Pages ───────────────────────────────────────────────────────── */
+.maintenance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1rem;
+}
+
+.maintenance-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .maintenance-detail-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Star Rating ─────────────────────────────────────────────────────────────── */
+.star-rating { display: flex; gap: 0.35rem; }
+
+.star {
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: transform 0.1s;
+  line-height: 1;
+  filter: grayscale(1) opacity(0.4);
+}
+
+.star.filled { filter: none; }
+.star:hover, .star:hover ~ .star { filter: grayscale(1) opacity(0.4); }
+.star-rating:hover .star { filter: none; }
+.star-rating:hover .star:hover ~ .star { filter: grayscale(1) opacity(0.4); }

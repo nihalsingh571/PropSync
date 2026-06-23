@@ -27,9 +27,9 @@ import PropertyDetail from './pages/Properties/PropertyDetail';
 import AdminProperties from './pages/Admin/AdminProperties';
 import AdminTenants from './pages/Admin/AdminTenants';
 import TenantProfile from './pages/Tenants/TenantProfile';
-// Phase 6:  import MaintenanceDetail from './pages/Maintenance/MaintenanceDetail';
-// Phase 6:  import NewRequest from './pages/Maintenance/NewRequest';
-// Phase 6:  import AdminMaintenance from './pages/Admin/AdminMaintenance';
+import MaintenanceList from './pages/Maintenance/MaintenanceList';
+import MaintenanceDetail from './pages/Maintenance/MaintenanceDetail';
+import AdminMaintenance from './pages/Admin/AdminMaintenance';
 // Phase 7:  import Amenities from './pages/Amenities/Amenities';
 // Phase 7:  import AdminAmenities from './pages/Admin/AdminAmenities';
 // Phase 8:  import BookingPage from './pages/Bookings/BookingPage';
@@ -89,7 +89,17 @@ const TenantRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return <>{children}</>;
 };
 
-// Phase 6: MaintenanceStaffRoute will be added here
+const MaintenanceStaffRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, loading } = useAuth();
+  if (loading) return <LoadingScreen />;
+  if (!user) return <Navigate to="/login" />;
+  if (!user.roles?.includes('maintenance_staff') && !user.roles?.includes('property_owner') && !user.roles?.includes('admin')) {
+    return <Navigate to="/dashboard" />;
+  }
+  return <>{children}</>;
+};
+
+// Phase 7: future route guards here
 
 // ─── Dashboard Router (Phase 10 — temporary redirect for now) ─────────────────
 const DashboardRouter: React.FC = () => {
@@ -98,7 +108,7 @@ const DashboardRouter: React.FC = () => {
   if (user.roles?.includes('admin')) return <Navigate to="/admin" />;
   if (user.roles?.includes('property_owner')) return <Navigate to="/properties" />;
   if (user.roles?.includes('tenant')) return <Navigate to="/my-lease" />;
-  // Phase 6+: if (user.roles?.includes('maintenance_staff')) return <Navigate to="/maintenance" />;
+  if (user.roles?.includes('maintenance_staff')) return <Navigate to="/maintenance" />;
   return (
     <div className="loading-container">
       <p>Welcome to PropSync! Role-specific dashboards coming soon.</p>
@@ -143,10 +153,9 @@ const AppContent: React.FC = () => {
           <Route path="/admin/tenants" element={<AdminRoute><AdminTenants /></AdminRoute>} />
 
           {/* Phase 6: Maintenance */}
-          {/* <Route path="/maintenance" element={<ProtectedRoute><MaintenanceList /></ProtectedRoute>} /> */}
-          {/* <Route path="/maintenance/new" element={<ProtectedRoute><NewRequest /></ProtectedRoute>} /> */}
-          {/* <Route path="/maintenance/:id" element={<ProtectedRoute><MaintenanceDetail /></ProtectedRoute>} /> */}
-          {/* <Route path="/admin/maintenance" element={<AdminRoute><AdminMaintenance /></AdminRoute>} /> */}
+          <Route path="/maintenance" element={<MaintenanceStaffRoute><MaintenanceList /></MaintenanceStaffRoute>} />
+          <Route path="/maintenance/:id" element={<MaintenanceStaffRoute><MaintenanceDetail /></MaintenanceStaffRoute>} />
+          <Route path="/admin/maintenance" element={<AdminRoute><AdminMaintenance /></AdminRoute>} />
 
           {/* Phase 7: Amenities */}
           {/* <Route path="/amenities" element={<ProtectedRoute><Amenities /></ProtectedRoute>} /> */}

@@ -83,10 +83,12 @@ const Navbar: React.FC = () => {
                 )}
 
 
-                {/* Phase 6+: Maintenance link for tenant/staff/owner/admin */}
-                {/* <Link to="/maintenance" className={`navbar-link ${isActive('/maintenance')}`} onClick={closeMenu}>
-                  Maintenance
-                </Link> */}
+                {/* Phase 6: Maintenance link for all authenticated roles */}
+                {(user.roles?.includes('tenant') || user.roles?.includes('maintenance_staff') || user.roles?.includes('property_owner')) && (
+                  <Link to="/maintenance" className={`navbar-link ${isActive('/maintenance')}`} onClick={closeMenu}>
+                    Maintenance
+                  </Link>
+                )}
 
                 {/* Phase 8+: Bookings link for tenants */}
                 {/* {user.roles?.includes('tenant') && (
