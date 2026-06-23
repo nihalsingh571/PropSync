@@ -22,9 +22,9 @@ import AdminSettings from './pages/Admin/AdminSettings';
 import { AdminRealtimeProvider } from './contexts/AdminRealtimeContext';
 
 // ─── Pages: PropSync Features (enabled progressively) ────────────────────────
-// Phase 4:  import Properties from './pages/Properties/Properties';
-// Phase 4:  import PropertyDetail from './pages/Properties/PropertyDetail';
-// Phase 4:  import AdminProperties from './pages/Admin/AdminProperties';
+import Properties from './pages/Properties/Properties';
+import PropertyDetail from './pages/Properties/PropertyDetail';
+import AdminProperties from './pages/Admin/AdminProperties';
 // Phase 5:  import AdminTenants from './pages/Admin/AdminTenants';
 // Phase 6:  import MaintenanceList from './pages/Maintenance/MaintenanceList';
 // Phase 6:  import MaintenanceDetail from './pages/Maintenance/MaintenanceDetail';
@@ -69,14 +69,24 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return <>{children}</>;
 };
 
-// Phase 3: PropertyOwnerRoute, TenantRoute, MaintenanceStaffRoute will be added here
+const PropertyOwnerRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, loading } = useAuth();
+  if (loading) return <LoadingScreen />;
+  if (!user) return <Navigate to="/login" />;
+  if (!user.roles?.includes('property_owner') && !user.roles?.includes('admin')) {
+    return <Navigate to="/dashboard" />;
+  }
+  return <>{children}</>;
+};
+
+// Phase 3: TenantRoute, MaintenanceStaffRoute will be added here
 
 // ─── Dashboard Router (Phase 10 — temporary redirect for now) ─────────────────
 const DashboardRouter: React.FC = () => {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" />;
   if (user.roles?.includes('admin')) return <Navigate to="/admin" />;
-  // Phase 4+: if (user.roles?.includes('property_owner')) return <Navigate to="/properties" />;
+  if (user.roles?.includes('property_owner')) return <Navigate to="/properties" />;
   // Phase 5+: if (user.roles?.includes('tenant')) return <Navigate to="/my-requests" />;
   // Phase 6+: if (user.roles?.includes('maintenance_staff')) return <Navigate to="/maintenance" />;
   return (
@@ -113,8 +123,10 @@ const AppContent: React.FC = () => {
           <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
           <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
 
-          {/* Phase 4: Admin Properties */}
-          {/* <Route path="/admin/properties" element={<AdminRoute><AdminProperties /></AdminRoute>} /> */}
+          {/* Phase 4: Properties */}
+          <Route path="/properties" element={<PropertyOwnerRoute><Properties /></PropertyOwnerRoute>} />
+          <Route path="/properties/:id" element={<ProtectedRoute><PropertyDetail /></ProtectedRoute>} />
+          <Route path="/admin/properties" element={<AdminRoute><AdminProperties /></AdminRoute>} />
 
           {/* Phase 5: Admin Tenants */}
           {/* <Route path="/admin/tenants" element={<AdminRoute><AdminTenants /></AdminRoute>} /> */}

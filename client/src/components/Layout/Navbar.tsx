@@ -68,6 +68,13 @@ const Navbar: React.FC = () => {
                   Dashboard
                 </Link>
 
+                {/* Phase 4: Properties link for owner */}
+                {user.roles?.includes('property_owner') && (
+                  <Link to="/properties" className={`navbar-link ${isActive('/properties')}`} onClick={closeMenu}>
+                    Properties
+                  </Link>
+                )}
+
                 {/* Phase 6+: Maintenance link for tenant/staff/owner/admin */}
                 {/* <Link to="/maintenance" className={`navbar-link ${isActive('/maintenance')}`} onClick={closeMenu}>
                   Maintenance

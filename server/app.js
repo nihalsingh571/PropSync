@@ -2,9 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import propertyRoutes from './routes/propertyRoutes.js';
 
 // ─── PropSync Route Imports (added progressively per phase) ─────────────────
-// Phase 4:  import propertyRoutes from './routes/propertyRoutes.js';
 // Phase 5:  import tenantRoutes from './routes/tenantRoutes.js';
 // Phase 6:  import maintenanceRoutes from './routes/maintenanceRoutes.js';
 // Phase 7:  import amenityRoutes from './routes/amenityRoutes.js';
@@ -36,12 +36,12 @@ export const createApp = ({ allowedOrigins = [] } = {}) => {
   app.use('/api/auth', authRoutes);
   app.use('/api/admin', adminRoutes);
 
-  // ─── PropSync Domain Routes (uncommented progressively per phase) ──────────
-  // app.use('/api/properties', propertyRoutes);     // Phase 4
-  // app.use('/api/tenants', tenantRoutes);           // Phase 5
-  // app.use('/api/maintenance', maintenanceRoutes);  // Phase 6
-  // app.use('/api/amenities', amenityRoutes);        // Phase 7
-  // app.use('/api/bookings', bookingRoutes);         // Phase 8
+  // ─── PropSync Domain Routes ─────────────────────────────────────────────────
+  app.use('/api/properties', propertyRoutes);      // Phase 4 ✅
+  // app.use('/api/tenants', tenantRoutes);         // Phase 5
+  // app.use('/api/maintenance', maintenanceRoutes); // Phase 6
+  // app.use('/api/amenities', amenityRoutes);       // Phase 7
+  // app.use('/api/bookings', bookingRoutes);        // Phase 8
   // app.use('/api/notifications', notificationRoutes); // Phase 9
 
   app.get('/', (req, res) => {

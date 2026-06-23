@@ -10,7 +10,7 @@ import './admin.css';
 const navItems = [
   { label: 'Dashboard', path: '/admin', icon: '🏠', exact: true },
   { label: 'Users', path: '/admin/users', icon: '👥' },
-  // Phase 4: { label: 'Properties', path: '/admin/properties', icon: '🏢' },
+  { label: 'Properties', path: '/admin/properties', icon: '🏢' },
   // Phase 5: { label: 'Tenants', path: '/admin/tenants', icon: '🙋' },
   // Phase 6: { label: 'Maintenance', path: '/admin/maintenance', icon: '🔧' },
   // Phase 7: { label: 'Amenities', path: '/admin/amenities', icon: '🏊' },
