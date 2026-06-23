@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import NotificationBell from '../Notifications/NotificationBell';
 import './Navbar.css';
 
 const Navbar: React.FC = () => {
@@ -111,6 +112,9 @@ const Navbar: React.FC = () => {
                   </Link>
                 )}
 
+                {/* Phase 8: Notification Bell */}
+                <NotificationBell />
+
                 {/* User menu */}
                 <div className="navbar-user">
                   <div className="user-info">
@@ -130,7 +134,7 @@ const Navbar: React.FC = () => {
                     <Link to="/profile" className="dropdown-link" onClick={closeMenu}>
                       👤 Profile
                     </Link>
-                    {/* Phase 9+: <Link to="/notifications" className="dropdown-link" onClick={closeMenu}>🔔 Notifications</Link> */}
+                    <Link to="/notifications" className="dropdown-link" onClick={closeMenu}>🔔 Notifications</Link>
                     <button onClick={handleLogout} className="dropdown-link logout-btn">
                       🚪 Logout
                     </button>

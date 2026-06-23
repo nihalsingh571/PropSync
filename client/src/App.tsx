@@ -32,10 +32,10 @@ import MaintenanceDetail from './pages/Maintenance/MaintenanceDetail';
 import AdminMaintenance from './pages/Admin/AdminMaintenance';
 import Amenities from './pages/Amenities/Amenities';
 import AdminAmenities from './pages/Admin/AdminAmenities';
-// Phase 8:  import BookingPage from './pages/Bookings/BookingPage';
-// Phase 8:  import MyBookings from './pages/Bookings/MyBookings';
-// Phase 8:  import AdminBookings from './pages/Admin/AdminBookings';
-// Phase 9:  import Notifications from './pages/Notifications/Notifications';
+import Notifications from './pages/Notifications/Notifications';
+import TenantDashboard from './pages/Dashboard/TenantDashboard';
+import OwnerDashboard from './pages/Dashboard/OwnerDashboard';
+import StaffDashboard from './pages/Dashboard/StaffDashboard';
 
 import Profile from './pages/Profile/Profile';
 import './App.css';
@@ -101,17 +101,16 @@ const MaintenanceStaffRoute: React.FC<{ children: React.ReactNode }> = ({ childr
 
 // Phase 7: future route guards here
 
-// ─── Dashboard Router (Phase 10 — temporary redirect for now) ─────────────────
 const DashboardRouter: React.FC = () => {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" />;
-  if (user.roles?.includes('admin')) return <Navigate to="/admin" />;
-  if (user.roles?.includes('property_owner')) return <Navigate to="/properties" />;
-  if (user.roles?.includes('tenant')) return <Navigate to="/my-lease" />;
-  if (user.roles?.includes('maintenance_staff')) return <Navigate to="/maintenance" />;
+  if (user.roles?.includes('admin'))             return <Navigate to="/admin" />;
+  if (user.roles?.includes('property_owner'))    return <OwnerDashboard />;
+  if (user.roles?.includes('tenant'))            return <TenantDashboard />;
+  if (user.roles?.includes('maintenance_staff')) return <StaffDashboard />;
   return (
     <div className="loading-container">
-      <p>Welcome to PropSync! Role-specific dashboards coming soon.</p>
+      <p>Welcome to PropSync!</p>
     </div>
   );
 };
@@ -161,12 +160,8 @@ const AppContent: React.FC = () => {
           <Route path="/amenities" element={<ProtectedRoute><Amenities /></ProtectedRoute>} />
           <Route path="/admin/amenities" element={<AdminRoute><AdminAmenities /></AdminRoute>} />
 
-          {/* Phase 8: Bookings */}
-          {/* <Route path="/bookings" element={<ProtectedRoute><BookingPage /></ProtectedRoute>} /> */}
-          {/* <Route path="/my-bookings" element={<ProtectedRoute><MyBookings /></ProtectedRoute>} /> */}
-
-          {/* Phase 9: Notifications */}
-          {/* <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} /> */}
+          {/* Phase 8: Notifications + Dashboards */}
+          <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
 
           {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" />} />
