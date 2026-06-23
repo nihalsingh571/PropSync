@@ -90,6 +90,13 @@ const Navbar: React.FC = () => {
                   </Link>
                 )}
 
+                {/* Phase 7: Amenities link for tenant/owner */}
+                {(user.roles?.includes('tenant') || user.roles?.includes('property_owner')) && (
+                  <Link to="/amenities" className={`navbar-link ${isActive('/amenities')}`} onClick={closeMenu}>
+                    Amenities
+                  </Link>
+                )}
+
                 {/* Phase 8+: Bookings link for tenants */}
                 {/* {user.roles?.includes('tenant') && (
                   <Link to="/my-bookings" className={`navbar-link ${isActive('/my-bookings')}`} onClick={closeMenu}>

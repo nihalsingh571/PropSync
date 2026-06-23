@@ -13,7 +13,7 @@ const navItems = [
   { label: 'Properties', path: '/admin/properties', icon: '🏢' },
   { label: 'Tenants', path: '/admin/tenants', icon: '🙋' },
   { label: 'Maintenance', path: '/admin/maintenance', icon: '🔧' },
-  // Phase 7: { label: 'Amenities', path: '/admin/amenities', icon: '🏊' },
+  { label: 'Amenities', path: '/admin/amenities', icon: '🏊' },
   // Phase 8: { label: 'Bookings', path: '/admin/bookings', icon: '📅' },
   { label: 'Analytics', path: '/admin/analytics', icon: '📈' },
   { label: 'Settings', path: '/admin/settings', icon: '⚙️' }

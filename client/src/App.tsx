@@ -30,8 +30,8 @@ import TenantProfile from './pages/Tenants/TenantProfile';
 import MaintenanceList from './pages/Maintenance/MaintenanceList';
 import MaintenanceDetail from './pages/Maintenance/MaintenanceDetail';
 import AdminMaintenance from './pages/Admin/AdminMaintenance';
-// Phase 7:  import Amenities from './pages/Amenities/Amenities';
-// Phase 7:  import AdminAmenities from './pages/Admin/AdminAmenities';
+import Amenities from './pages/Amenities/Amenities';
+import AdminAmenities from './pages/Admin/AdminAmenities';
 // Phase 8:  import BookingPage from './pages/Bookings/BookingPage';
 // Phase 8:  import MyBookings from './pages/Bookings/MyBookings';
 // Phase 8:  import AdminBookings from './pages/Admin/AdminBookings';
@@ -158,7 +158,8 @@ const AppContent: React.FC = () => {
           <Route path="/admin/maintenance" element={<AdminRoute><AdminMaintenance /></AdminRoute>} />
 
           {/* Phase 7: Amenities */}
-          {/* <Route path="/amenities" element={<ProtectedRoute><Amenities /></ProtectedRoute>} /> */}
+          <Route path="/amenities" element={<ProtectedRoute><Amenities /></ProtectedRoute>} />
+          <Route path="/admin/amenities" element={<AdminRoute><AdminAmenities /></AdminRoute>} />
 
           {/* Phase 8: Bookings */}
           {/* <Route path="/bookings" element={<ProtectedRoute><BookingPage /></ProtectedRoute>} /> */}
