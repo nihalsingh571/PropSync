@@ -1,0 +1,115 @@
+.admin-users-toolbar {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.admin-users-toolbar input[type='search'],
+.admin-users-toolbar select {
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5f5;
+  min-width: 220px;
+}
+
+.admin-users-toolbar button {
+  padding: 0.45rem 0.9rem;
+  border: none;
+  border-radius: 8px;
+  background: #e0e7ff;
+  color: #312e81;
+  cursor: pointer;
+}
+
+.admin-users-toolbar button:hover {
+  background: #c7d2fe;
+}
+
+.admin-users-bulk {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.muted {
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.status {
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
+.status-success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-warning {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.status-deleted {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.admin-user-actions button {
+  border: none;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  background: #eef2ff;
+  cursor: pointer;
+}
+
+.admin-users-toolbar .selection-count {
+  font-size: 0.9rem;
+  color: #4a5568;
+}
+
+.admin-user-details {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-user-details__section {
+  border: 1px solid #edf2f7;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  background: #f9fafb;
+}
+
+.admin-user-details__section h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+}
+
+.admin-user-details__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.5rem;
+}
+
+.admin-user-details__grid span {
+  font-size: 0.9rem;
+  color: #4a5568;
+}
+
+.admin-reviews-list {
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin-reviews-list article {
+  background: white;
+  border-radius: 12px;
+  padding: 0.75rem;
+  border: 1px solid #f1f5f9;
+}

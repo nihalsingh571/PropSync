@@ -1,0 +1,17 @@
+.admin-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.admin-panels {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 1.25rem;
+}
+
+@media (max-width: 960px) {
+  .admin-panels {
+    grid-template-columns: 1fr;
+  }
+}
