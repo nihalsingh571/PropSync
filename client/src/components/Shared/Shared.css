@@ -1,0 +1,140 @@
+/* ── Shared Components CSS ────────────────────────────────────────────────────── */
+
+/* ── Table Wrapper ───────────────────────────────────────────────────────────── */
+.table-wrap {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border, #334155);
+}
+
+.shared-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.shared-table th {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  background: rgba(255,255,255,0.04);
+  color: var(--text-muted, #94a3b8);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.shared-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border, #334155);
+  color: var(--text-primary, #f1f5f9);
+  vertical-align: middle;
+}
+
+.shared-table tbody tr:last-child td { border-bottom: none; }
+
+.shared-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+.row--warning { background: rgba(245,158,11,0.04) !important; }
+.row--warning:hover { background: rgba(245,158,11,0.07) !important; }
+
+/* ── Tenant Cell ─────────────────────────────────────────────────────────────── */
+.tenant-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.tenant-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: white;
+  flex-shrink: 0;
+}
+
+.tenant-name {
+  font-weight: 600;
+  color: var(--text-primary, #f1f5f9);
+  font-size: 0.875rem;
+}
+
+.tenant-email {
+  font-size: 0.78rem;
+  color: var(--text-muted, #94a3b8);
+  margin-top: 1px;
+}
+
+.text--warning { color: #f59e0b !important; }
+
+/* ── Status Badges ───────────────────────────────────────────────────────────── */
+.shared-badge {
+  display: inline-block;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badge--active    { background: rgba(16,185,129,0.15);  color: #10b981; }
+.badge--notice    { background: rgba(245,158,11,0.15);  color: #f59e0b; }
+.badge--vacated   { background: rgba(148,163,184,0.12); color: #94a3b8; }
+.badge--pending   { background: rgba(59,130,246,0.15);  color: #3b82f6; }
+.badge--open      { background: rgba(59,130,246,0.15);  color: #3b82f6; }
+.badge--in-progress { background: rgba(139,92,246,0.15); color: #a78bfa; }
+.badge--resolved  { background: rgba(16,185,129,0.15);  color: #10b981; }
+.badge--closed    { background: rgba(148,163,184,0.12); color: #94a3b8; }
+
+/* ── Action Buttons ──────────────────────────────────────────────────────────── */
+.action-btns {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.action-btn--view   { background: rgba(79,70,229,0.15);  color: #818cf8; }
+.action-btn--view:hover { background: rgba(79,70,229,0.28); }
+
+.action-btn--edit   { background: rgba(245,158,11,0.12); color: #f59e0b; }
+.action-btn--edit:hover { background: rgba(245,158,11,0.22); }
+
+.action-btn--delete { background: rgba(239,68,68,0.1);  color: #f87171; }
+.action-btn--delete:hover { background: rgba(239,68,68,0.2); }
+
+/* ── Skeleton / Empty ────────────────────────────────────────────────────────── */
+.table-skeleton-row {
+  height: 52px;
+  background: linear-gradient(90deg, #1e293b 25%, #263045 50%, #1e293b 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-bottom: 1px solid #334155;
+}
+
+.table-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem 1rem;
+  gap: 0.5rem;
+  color: var(--text-muted, #94a3b8);
+}
+
+.table-empty__icon { font-size: 2.5rem; }

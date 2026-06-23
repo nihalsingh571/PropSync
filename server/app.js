@@ -3,9 +3,9 @@ import cors from 'cors';
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import propertyRoutes from './routes/propertyRoutes.js';
+import tenantRoutes from './routes/tenantRoutes.js';
 
 // ─── PropSync Route Imports (added progressively per phase) ─────────────────
-// Phase 5:  import tenantRoutes from './routes/tenantRoutes.js';
 // Phase 6:  import maintenanceRoutes from './routes/maintenanceRoutes.js';
 // Phase 7:  import amenityRoutes from './routes/amenityRoutes.js';
 // Phase 8:  import bookingRoutes from './routes/bookingRoutes.js';
@@ -38,7 +38,7 @@ export const createApp = ({ allowedOrigins = [] } = {}) => {
 
   // ─── PropSync Domain Routes ─────────────────────────────────────────────────
   app.use('/api/properties', propertyRoutes);      // Phase 4 ✅
-  // app.use('/api/tenants', tenantRoutes);         // Phase 5
+  app.use('/api/tenants', tenantRoutes);            // Phase 5 ✅
   // app.use('/api/maintenance', maintenanceRoutes); // Phase 6
   // app.use('/api/amenities', amenityRoutes);       // Phase 7
   // app.use('/api/bookings', bookingRoutes);        // Phase 8

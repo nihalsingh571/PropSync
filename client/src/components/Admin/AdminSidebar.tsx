@@ -11,7 +11,7 @@ const navItems = [
   { label: 'Dashboard', path: '/admin', icon: '🏠', exact: true },
   { label: 'Users', path: '/admin/users', icon: '👥' },
   { label: 'Properties', path: '/admin/properties', icon: '🏢' },
-  // Phase 5: { label: 'Tenants', path: '/admin/tenants', icon: '🙋' },
+  { label: 'Tenants', path: '/admin/tenants', icon: '🙋' },
   // Phase 6: { label: 'Maintenance', path: '/admin/maintenance', icon: '🔧' },
   // Phase 7: { label: 'Amenities', path: '/admin/amenities', icon: '🏊' },
   // Phase 8: { label: 'Bookings', path: '/admin/bookings', icon: '📅' },

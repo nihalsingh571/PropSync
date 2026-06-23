@@ -25,8 +25,8 @@ import { AdminRealtimeProvider } from './contexts/AdminRealtimeContext';
 import Properties from './pages/Properties/Properties';
 import PropertyDetail from './pages/Properties/PropertyDetail';
 import AdminProperties from './pages/Admin/AdminProperties';
-// Phase 5:  import AdminTenants from './pages/Admin/AdminTenants';
-// Phase 6:  import MaintenanceList from './pages/Maintenance/MaintenanceList';
+import AdminTenants from './pages/Admin/AdminTenants';
+import TenantProfile from './pages/Tenants/TenantProfile';
 // Phase 6:  import MaintenanceDetail from './pages/Maintenance/MaintenanceDetail';
 // Phase 6:  import NewRequest from './pages/Maintenance/NewRequest';
 // Phase 6:  import AdminMaintenance from './pages/Admin/AdminMaintenance';
@@ -79,7 +79,17 @@ const PropertyOwnerRoute: React.FC<{ children: React.ReactNode }> = ({ children 
   return <>{children}</>;
 };
 
-// Phase 3: TenantRoute, MaintenanceStaffRoute will be added here
+const TenantRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, loading } = useAuth();
+  if (loading) return <LoadingScreen />;
+  if (!user) return <Navigate to="/login" />;
+  if (!user.roles?.includes('tenant') && !user.roles?.includes('admin')) {
+    return <Navigate to="/dashboard" />;
+  }
+  return <>{children}</>;
+};
+
+// Phase 6: MaintenanceStaffRoute will be added here
 
 // ─── Dashboard Router (Phase 10 — temporary redirect for now) ─────────────────
 const DashboardRouter: React.FC = () => {
@@ -87,7 +97,7 @@ const DashboardRouter: React.FC = () => {
   if (!user) return <Navigate to="/login" />;
   if (user.roles?.includes('admin')) return <Navigate to="/admin" />;
   if (user.roles?.includes('property_owner')) return <Navigate to="/properties" />;
-  // Phase 5+: if (user.roles?.includes('tenant')) return <Navigate to="/my-requests" />;
+  if (user.roles?.includes('tenant')) return <Navigate to="/my-lease" />;
   // Phase 6+: if (user.roles?.includes('maintenance_staff')) return <Navigate to="/maintenance" />;
   return (
     <div className="loading-container">
@@ -128,8 +138,9 @@ const AppContent: React.FC = () => {
           <Route path="/properties/:id" element={<ProtectedRoute><PropertyDetail /></ProtectedRoute>} />
           <Route path="/admin/properties" element={<AdminRoute><AdminProperties /></AdminRoute>} />
 
-          {/* Phase 5: Admin Tenants */}
-          {/* <Route path="/admin/tenants" element={<AdminRoute><AdminTenants /></AdminRoute>} /> */}
+          {/* Phase 5: Tenant */}
+          <Route path="/my-lease" element={<TenantRoute><TenantProfile /></TenantRoute>} />
+          <Route path="/admin/tenants" element={<AdminRoute><AdminTenants /></AdminRoute>} />
 
           {/* Phase 6: Maintenance */}
           {/* <Route path="/maintenance" element={<ProtectedRoute><MaintenanceList /></ProtectedRoute>} /> */}
