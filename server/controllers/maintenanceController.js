@@ -168,3 +168,34 @@ export const deleteRequest = async (req, res) => {
     return res.json({ message: 'Request deleted' });
   } catch (err) { return res.status(500).json({ message: err.message }); }
 };
+
+// ── POST /api/maintenance/:id/attachments ──────────────────────────────────────
+// Upload photos for a maintenance request (any authorised role)
+export const uploadAttachments = async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: 'No images uploaded' });
+    }
+
+    const request = await maintenanceService.getRequestById(req.params.id);
+    if (!request) return res.status(404).json({ message: 'Request not found' });
+
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const newAttachments = req.files.map(f => ({
+      url: `${baseUrl}/uploads/${f.filename}`,
+      name: f.originalname,
+      type: f.mimetype
+    }));
+
+    const updated = await maintenanceService.addAttachments(
+      req.params.id, newAttachments
+    );
+
+    return res.json({
+      message: `${newAttachments.length} photo(s) uploaded`,
+      attachments: updated.attachments
+    });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};

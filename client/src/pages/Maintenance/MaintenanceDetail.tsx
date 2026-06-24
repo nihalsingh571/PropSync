@@ -6,6 +6,7 @@ import type { MaintenanceStatus, StaffUser } from '../../lib/maintenanceApi';
 import { STATUS_CONFIG, PRIORITY_CONFIG, CATEGORY_LABELS } from '../../lib/maintenanceApi';
 import MaintenanceTimeline from '../../components/Maintenance/MaintenanceTimeline';
 import Modal from '../../components/Admin/Modal';
+import ImageUploader from '../../components/Shared/ImageUploader';
 import { useToast } from '../../contexts/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
 import '../../components/Maintenance/Maintenance.css';
@@ -101,6 +102,15 @@ const MaintenanceDetail: React.FC = () => {
       setShowFeedbackModal(false);
     },
     onError: (err: any) => showToast(err?.response?.data?.message || 'Failed', 'error')
+  });
+
+  const uploadAttachmentsMutation = useMutation({
+    mutationFn: (files: File[]) => maintenanceApi.uploadAttachments(id!, files),
+    onSuccess: () => {
+      showToast('Photos uploaded', 'success');
+      queryClient.invalidateQueries({ queryKey: ['maintenance-detail', id] });
+    },
+    onError: (err: any) => showToast(err?.response?.data?.message || 'Upload failed', 'error')
   });
 
   if (isLoading) return (
@@ -252,6 +262,32 @@ const MaintenanceDetail: React.FC = () => {
                 {request.tenantFeedback && <p style={{ color: '#94a3b8', margin: 0 }}>{request.tenantFeedback}</p>}
               </div>
             )}
+
+            {/* Attachments / Photos */}
+            <div className="info-card">
+              <h3 className="info-card__title">📸 Photos & Attachments</h3>
+              
+              {(request.attachments && request.attachments.length > 0) ? (
+                <div className="img-gallery">
+                  {request.attachments.map((att, idx) => (
+                    <div key={idx} className="img-gallery__item" onClick={() => window.open(att.url, '_blank')} title={att.name}>
+                      <img src={att.url} alt={att.name} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p style={{ color: '#94a3b8', margin: '0 0 1rem' }}>No photos attached.</p>
+              )}
+
+              <div style={{ marginTop: '1rem' }}>
+                <ImageUploader
+                  maxFiles={5}
+                  onUpload={async (files) => { await uploadAttachmentsMutation.mutateAsync(files); }}
+                  label="Add Photos"
+                  loading={uploadAttachmentsMutation.isPending}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Right: Timeline */}

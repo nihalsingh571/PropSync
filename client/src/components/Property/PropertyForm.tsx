@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { Property, PropertyType } from '../../lib/propertyApi';
+import ImageUploader from '../Shared/ImageUploader';
 import './Property.css';
 
 const PROPERTY_TYPES: { value: PropertyType; label: string }[] = [
@@ -12,7 +13,7 @@ const PROPERTY_TYPES: { value: PropertyType; label: string }[] = [
 
 interface PropertyFormProps {
   initialValues?: Partial<Property>;
-  onSubmit: (data: Partial<Property>) => void;
+  onSubmit: (data: Partial<Property>, files?: File[]) => void;
   submitting?: boolean;
   mode?: 'create' | 'edit';
 }
@@ -38,6 +39,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     address: { ...defaultValues.address, ...initialValues?.address } as Property['address']
   });
   const [error, setError] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const set = (key: string, value: unknown) =>
     setForm(prev => ({ ...prev, [key]: value }));
@@ -61,7 +63,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     e.preventDefault();
     setError('');
     if (!validate()) return;
-    onSubmit(form);
+    onSubmit(form, selectedFiles);
   };
 
   return (
@@ -201,6 +203,21 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
               value={form.address?.country ?? 'India'}
               onChange={e => setAddress('country', e.target.value)}
               disabled={submitting}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ── Images (Upload) ─────────────────────────────────────────────────── */}
+      <section className="prop-form-section">
+        <h4>Images</h4>
+        <div className="prop-form-grid">
+          <div className="form-group form-group--full">
+            <ImageUploader
+              maxFiles={5}
+              onUpload={async (files) => setSelectedFiles(files)}
+              label="Select Property Images"
+              hint="JPG, PNG, WebP up to 5MB. They will be uploaded when you save."
             />
           </div>
         </div>

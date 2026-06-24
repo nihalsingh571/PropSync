@@ -96,5 +96,16 @@ export const propertyApi = {
     api.put<{ message: string; property: Property }>(`/properties/${propertyId}/units/${unitId}`, unitData).then(r => r.data),
 
   deleteUnit: (propertyId: string, unitId: string) =>
-    api.delete<{ message: string; property: Property }>(`/properties/${propertyId}/units/${unitId}`).then(r => r.data)
+    api.delete<{ message: string; property: Property }>(`/properties/${propertyId}/units/${unitId}`).then(r => r.data),
+
+  // Image upload
+  uploadImages: (propertyId: string, files: File[]) => {
+    const form = new FormData();
+    files.forEach(f => form.append('images', f));
+    return api.post<{ message: string; images: string[]; coverImage: string }>(
+      `/properties/${propertyId}/images`,
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    ).then(r => r.data);
+  }
 };

@@ -82,6 +82,41 @@ export const createProperty = async (req, res) => {
   }
 };
 
+// ── POST /api/properties/:id/images ───────────────────────────────────────────
+// Upload images for a property; sets coverImage from the first upload if none set
+export const uploadPropertyImages = async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: 'No images uploaded' });
+    }
+
+    const property = await propertyService.getPropertyById(req.params.id);
+    if (!property) return res.status(404).json({ message: 'Property not found' });
+
+    // Ownership check
+    if (!isAdminUser(req.user) &&
+        property.ownerId?._id?.toString() !== req.user._id.toString() &&
+        property.ownerId?.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorised' });
+    }
+
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const newUrls = req.files.map(f => `${baseUrl}/uploads/${f.filename}`);
+    const images = [...(property.images || []), ...newUrls];
+    const coverImage = property.coverImage || newUrls[0];
+
+    const updated = await propertyService.updateProperty(
+      req.params.id, req.user._id.toString(), isAdminUser(req.user),
+      { images, coverImage }
+    );
+
+    return res.json({ message: `${newUrls.length} image(s) uploaded`, images: updated.images, coverImage: updated.coverImage });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+
 // ── PUT /api/properties/:id ────────────────────────────────────────────────────
 export const updateProperty = async (req, res) => {
   try {

@@ -13,6 +13,8 @@ import {
   deleteRequest
 } from '../controllers/maintenanceController.js';
 import { protect, admin, requireRole } from '../middleware/protect.js';
+import { uploadMultiple } from '../middleware/upload.js';
+import { uploadAttachments } from '../controllers/maintenanceController.js';
 
 const router = express.Router();
 router.use(protect);
@@ -60,6 +62,14 @@ router.patch(
   '/:id/feedback',
   requireRole('tenant'),
   addFeedback
+);
+
+// POST /api/maintenance/:id/attachments — upload up to 5 photos
+router.post(
+  '/:id/attachments',
+  requireRole('tenant', 'maintenance_staff', 'property_owner', 'admin'),
+  uploadMultiple,
+  uploadAttachments
 );
 
 export default router;

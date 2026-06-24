@@ -9,6 +9,7 @@ import Modal from '../../components/Admin/Modal';
 import { useToast } from '../../contexts/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { propertyApi } from '../../lib/propertyApi';
+import ImageUploader from '../../components/Shared/ImageUploader';
 import '../../components/Maintenance/Maintenance.css';
 import '../../components/Shared/Shared.css';
 import '../Properties/Properties.css';
@@ -38,7 +39,13 @@ const MaintenanceList: React.FC = () => {
 
   // ── Create Mutation ────────────────────────────────────────────────────────
   const createMutation = useMutation({
-    mutationFn: (data: CreateMaintenancePayload) => maintenanceApi.create(data),
+    mutationFn: async ({ data, files }: { data: CreateMaintenancePayload; files?: File[] }) => {
+      const res = await maintenanceApi.create(data);
+      if (files && files.length > 0) {
+        await maintenanceApi.uploadAttachments(res.request._id, files);
+      }
+      return res;
+    },
     onSuccess: (res) => {
       showToast('Request submitted!', 'success');
       queryClient.invalidateQueries({ queryKey: ['maintenance'] });
@@ -155,7 +162,7 @@ const MaintenanceList: React.FC = () => {
       <Modal isOpen={showNewModal} title="New Maintenance Request" onClose={() => setShowNewModal(false)}>
         <NewRequestForm
           properties={properties}
-          onSubmit={data => createMutation.mutate(data)}
+          onSubmit={(data, files) => createMutation.mutate({ data, files })}
           submitting={createMutation.isPending}
         />
       </Modal>
@@ -166,13 +173,14 @@ const MaintenanceList: React.FC = () => {
 // ── New Request Form ──────────────────────────────────────────────────────────
 const NewRequestForm: React.FC<{
   properties: any[];
-  onSubmit: (data: CreateMaintenancePayload) => void;
+  onSubmit: (data: CreateMaintenancePayload, files?: File[]) => void;
   submitting: boolean;
 }> = ({ properties, onSubmit, submitting }) => {
   const [form, setForm] = useState<CreateMaintenancePayload>({
     propertyId: '', unitNumber: '', title: '', description: '',
     category: 'other', priority: 'medium'
   });
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const selectedProp = properties.find(p => p._id === form.propertyId);
   const myUnits = selectedProp?.units ?? [];
@@ -227,11 +235,21 @@ const NewRequestForm: React.FC<{
           <label className="form-label">Description *</label>
           <textarea className="form-input form-textarea" value={form.description} onChange={e => set('description', e.target.value)} placeholder="Describe the issue in detail…" rows={4} disabled={submitting} />
         </div>
+        <div className="form-group form-group--full">
+          <label className="form-label">Photos / Attachments</label>
+          <ImageUploader
+            maxFiles={5}
+            onUpload={async (files) => setSelectedFiles(files)}
+            label="Select Photos"
+            hint="JPG, PNG, WebP up to 5MB. They will be uploaded when you submit."
+            loading={submitting}
+          />
+        </div>
       </div>
       <div className="prop-form-footer">
         <button type="button" className="btn btn-primary"
           disabled={submitting || !form.title.trim() || !form.description.trim() || !form.unitNumber.trim()}
-          onClick={() => onSubmit(form)}>
+          onClick={() => onSubmit(form, selectedFiles)}>
           {submitting ? <><span className="btn-spinner" />Submitting…</> : 'Submit Request'}
         </button>
       </div>

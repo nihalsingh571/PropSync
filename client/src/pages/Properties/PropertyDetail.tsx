@@ -5,6 +5,7 @@ import { propertyApi } from '../../lib/propertyApi';
 import type { Unit } from '../../lib/propertyApi';
 import PropertyForm from '../../components/Property/PropertyForm';
 import Modal from '../../components/Admin/Modal';
+import ImageUploader from '../../components/Shared/ImageUploader';
 import { useToast } from '../../contexts/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
 import '../../components/Property/Property.css';
@@ -81,6 +82,15 @@ const PropertyDetail: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['property', id] });
     },
     onError: (err: any) => showToast(err?.response?.data?.message || 'Cannot delete unit', 'error')
+  });
+
+  const uploadImagesMutation = useMutation({
+    mutationFn: (files: File[]) => propertyApi.uploadImages(id!, files),
+    onSuccess: () => {
+      showToast('Images uploaded', 'success');
+      queryClient.invalidateQueries({ queryKey: ['property', id] });
+    },
+    onError: (err: any) => showToast(err?.response?.data?.message || 'Upload failed', 'error')
   });
 
   if (isLoading) return (
@@ -160,6 +170,11 @@ const PropertyDetail: React.FC = () => {
           )}
         </div>
 
+        {/* ── Cover Image ─────────────────────────────────────────────────── */}
+        {property.coverImage && (
+          <img src={property.coverImage} alt="Cover" className="cover-img" />
+        )}
+
         {/* ── Description ─────────────────────────────────────────────────── */}
         {property.description && (
           <div className="detail-section">
@@ -182,6 +197,34 @@ const PropertyDetail: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* ── Property Images ─────────────────────────────────────────────── */}
+        <div className="detail-section">
+          <h2 className="detail-section__title">Property Images</h2>
+          
+          {(property.images && property.images.length > 0) ? (
+            <div className="img-gallery">
+              {property.images.map((url, idx) => (
+                <div key={idx} className="img-gallery__item" onClick={() => window.open(url, '_blank')}>
+                  <img src={url} alt={`Property image ${idx + 1}`} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ color: 'var(--text-muted, #94a3b8)', marginBottom: '1rem' }}>No images available.</p>
+          )}
+
+          {canEdit && (
+            <div style={{ marginTop: '1.5rem', maxWidth: '400px' }}>
+              <ImageUploader
+                maxFiles={5}
+                onUpload={async (files) => { await uploadImagesMutation.mutateAsync(files); }}
+                label="Add More Images"
+                loading={uploadImagesMutation.isPending}
+              />
+            </div>
+          )}
+        </div>
 
         {/* ── Units Table ─────────────────────────────────────────────────── */}
         <div className="detail-section">

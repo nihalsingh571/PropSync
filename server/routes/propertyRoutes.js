@@ -12,6 +12,8 @@ import {
   deleteUnit
 } from '../controllers/propertyController.js';
 import { protect, admin, requireRole } from '../middleware/protect.js';
+import { uploadMultiple } from '../middleware/upload.js';
+import { uploadPropertyImages } from '../controllers/propertyController.js';
 
 const router = express.Router();
 
@@ -63,6 +65,14 @@ router.delete(
   '/:id',
   admin,
   deleteProperty
+);
+
+// POST /api/properties/:id/images — upload up to 5 images
+router.post(
+  '/:id/images',
+  requireRole('property_owner', 'admin'),
+  uploadMultiple,
+  uploadPropertyImages
 );
 
 // ── Unit Sub-Document Routes ───────────────────────────────────────────────────

@@ -38,7 +38,13 @@ const Properties: React.FC = () => {
 
   // ── Mutations ──────────────────────────────────────────────────────────────
   const createMutation = useMutation({
-    mutationFn: (data: Partial<Property>) => propertyApi.create(data),
+    mutationFn: async ({ data, files }: { data: Partial<Property>; files?: File[] }) => {
+      const res = await propertyApi.create(data);
+      if (files && files.length > 0) {
+        await propertyApi.uploadImages(res.property._id, files);
+      }
+      return res;
+    },
     onSuccess: () => {
       showToast('Property created successfully!', 'success');
       queryClient.invalidateQueries({ queryKey: PROPERTIES_QK });
@@ -207,7 +213,7 @@ const Properties: React.FC = () => {
       >
         <PropertyForm
           mode="create"
-          onSubmit={(data) => createMutation.mutate(data)}
+          onSubmit={(data, files) => createMutation.mutate({ data, files })}
           submitting={createMutation.isPending}
         />
       </Modal>

@@ -1,5 +1,8 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import propertyRoutes from './routes/propertyRoutes.js';
@@ -33,7 +36,10 @@ export const createApp = ({ allowedOrigins = [] } = {}) => {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true }));
 
-  // ─── Core Routes ───────────────────────────────────────────────────────────
+  // ── Static File Serving (uploaded images) ────────────────────────────────────
+  app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+  // ── Core Routes ───────────────────────────────────────────────────────────────
   app.use('/api/auth', authRoutes);
   app.use('/api/admin', adminRoutes);
 

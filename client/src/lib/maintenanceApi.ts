@@ -125,5 +125,15 @@ export const maintenanceApi = {
   feedback: (id: string, rating: number, feedback?: string) =>
     api.patch<{ message: string; request: MaintenanceRequest }>(`/maintenance/${id}/feedback`, { rating, feedback }).then(r => r.data),
 
-  delete: (id: string) => api.delete<{ message: string }>(`/maintenance/${id}`).then(r => r.data)
+  delete: (id: string) => api.delete<{ message: string }>(`/maintenance/${id}`).then(r => r.data),
+
+  uploadAttachments: (id: string, files: File[]) => {
+    const form = new FormData();
+    files.forEach(f => form.append('images', f));
+    return api.post<{ message: string; attachments: { url: string; name: string; type: string }[] }>(
+      `/maintenance/${id}/attachments`,
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    ).then(r => r.data);
+  }
 };

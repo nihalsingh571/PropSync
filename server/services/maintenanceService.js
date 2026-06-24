@@ -242,3 +242,12 @@ export const getMaintenanceStaff = async () => {
     .select('name email phone')
     .lean();
 };
+
+// ── Add Photo Attachments ──────────────────────────────────────────────────────
+export const addAttachments = async (id, newAttachments) => {
+  return MaintenanceRequest.findByIdAndUpdate(
+    id,
+    { $push: { attachments: { $each: newAttachments } } },
+    { new: true }
+  );
+};
