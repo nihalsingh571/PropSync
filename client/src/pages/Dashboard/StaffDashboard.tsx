@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { maintenanceApi } from '../../lib/maintenanceApi';
 import { STATUS_CONFIG } from '../../lib/maintenanceApi';
+import { notificationApi, NOTIFICATION_ICONS } from '../../lib/notificationApi';
 import '../Properties/Properties.css';
 import '../../components/Shared/Shared.css';
 
@@ -18,10 +19,17 @@ const StaffDashboard: React.FC = () => {
     queryFn: () => maintenanceApi.list({ status: 'in_progress', limit: 5 }),
     staleTime: 30_000
   });
+  const notifQuery = useQuery({ 
+    queryKey: ['notif-dash'], 
+    queryFn: () => notificationApi.list({ limit: 5 }), 
+    staleTime: 30_000 
+  });
 
   const s = statsQuery.data;
   const assigned   = assignedQuery.data?.requests ?? [];
   const inProgress = inProgressQuery.data?.requests ?? [];
+  const notifs   = notifQuery.data?.notifications ?? [];
+  const unread   = notifQuery.data?.unreadCount ?? 0;
 
   return (
     <div className="properties-page">
@@ -31,9 +39,16 @@ const StaffDashboard: React.FC = () => {
             <h1 className="page-title">👷 Staff Dashboard</h1>
             <p className="page-subtitle">Your maintenance workload</p>
           </div>
-          <Link to="/maintenance" className="btn btn-primary" style={{ fontSize: '0.85rem', textDecoration: 'none' }}>
-            View All Requests
-          </Link>
+          <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+            {unread > 0 && (
+              <Link to="/notifications" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '0.5rem 1rem', borderRadius: 10, textDecoration: 'none', fontSize: '0.85rem', fontWeight: 700 }}>
+                🔔 {unread} unread
+              </Link>
+            )}
+            <Link to="/maintenance" className="btn btn-primary" style={{ fontSize: '0.85rem', textDecoration: 'none' }}>
+              View All Requests
+            </Link>
+          </div>
         </div>
 
         {/* ── Stats ─────────────────────────────────────────────────── */}
@@ -97,6 +112,29 @@ const StaffDashboard: React.FC = () => {
                       <span className={`shared-badge ${STATUS_CONFIG['in_progress'].cls}`} style={{ fontSize: '0.65rem' }}>In Progress</span>
                     </div>
                   </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ── Recent Notifications ──────────────────────────────────── */}
+          <div className="dash-card">
+            <div className="dash-card__header">
+              <span className="dash-card__title">🔔 Notifications</span>
+              <Link to="/notifications" className="dash-card__link">View All →</Link>
+            </div>
+            {notifs.length === 0 ? (
+              <p style={{ color: '#64748b', fontSize: '0.82rem' }}>No notifications.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {notifs.map(n => (
+                  <div key={n._id} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', opacity: n.read ? 0.6 : 1 }}>
+                    <span style={{ fontSize: '1rem', flexShrink: 0 }}>{NOTIFICATION_ICONS[n.type] ?? '📩'}</span>
+                    <div>
+                      <div style={{ fontSize: '0.78rem', fontWeight: n.read ? 500 : 700, color: '#f1f5f9' }}>{n.title}</div>
+                      <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{new Date(n.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</div>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}

@@ -16,7 +16,7 @@ import '../Properties/Properties.css';
 // State machine: what transitions are allowed per role
 const TRANSITIONS_BY_ROLE: Record<string, Partial<Record<MaintenanceStatus, MaintenanceStatus[]>>> = {
   maintenance_staff: {
-    assigned:       ['in_progress'],
+    assigned:       ['in_progress', 'open'],
     in_progress:    ['pending_review']
   },
   property_owner: {

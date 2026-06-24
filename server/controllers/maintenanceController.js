@@ -9,14 +9,24 @@ const isStaff = (user) => user?.roles?.includes('maintenance_staff');
 
 // ── Build scope filter for the calling user ────────────────────────────────────
 const buildScope = async (user) => {
-  if (isAdmin(user)) return {};                              // admin: no scope limit
-  if (isTenant(user)) return { requesterId: user._id.toString() };
-  if (isStaff(user))  return { assignedToId: user._id.toString() };
+  if (isAdmin(user)) return {};
+
+  const conditions = [];
+  if (isTenant(user)) conditions.push({ tenantId: user._id });
+  if (isStaff(user))  conditions.push({ assignedTo: user._id });
   if (isOwner(user)) {
     const props = await Property.find({ ownerId: user._id }, '_id').lean();
-    return { ownerPropertyIds: props.map(p => p._id) };
+    if (props.length > 0) {
+      conditions.push({ propertyId: { $in: props.map(p => p._id) } });
+    } else {
+      conditions.push({ propertyId: null }); // Ensure no results if owner has no properties
+    }
   }
-  return { requesterId: user._id.toString() }; // fallback
+
+  if (conditions.length === 1) return conditions[0];
+  if (conditions.length > 1) return { $or: conditions };
+
+  return { tenantId: user._id }; // fallback
 };
 
 // ── GET /api/maintenance/stats ─────────────────────────────────────────────────
@@ -42,7 +52,7 @@ export const listRequests = async (req, res) => {
     const { status, priority, category, page, limit, search, propertyId } = req.query;
     const scope = await buildScope(req.user);
     const result = await maintenanceService.listRequests({
-      ...scope, propertyId, status, priority, category,
+      scope, propertyId, status, priority, category,
       page: page || 1, limit: limit || 20, search: search || ''
     });
     return res.json(result);
