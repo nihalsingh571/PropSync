@@ -1,0 +1,43 @@
+# Render.com deployment config for PropSync backend
+# Docs: https://render.com/docs/yaml-spec
+
+services:
+  - type: web
+    name: propsync-api
+    runtime: node
+    region: singapore          # closest to IN users; change to oregon/frankfurt as needed
+    plan: free                  # upgrade to starter ($7/mo) for always-on
+    branch: main
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /
+    autoDeploy: true            # deploy on every push to main
+
+    envVars:
+      # ── Required ───────────────────────────────────────────────────────────────
+      - key: NODE_ENV
+        value: production
+
+      - key: PORT
+        value: 8000
+
+      # Set these via the Render dashboard → Environment tab (never commit values)
+      - key: MONGODB_URI
+        sync: false             # prompts you to enter value in dashboard
+
+      - key: JWT_SECRET
+        generateValue: true     # Render auto-generates a secure random string
+
+      - key: JWT_EXPIRE
+        value: 30d
+
+      # ── CORS ──────────────────────────────────────────────────────────────────
+      # Comma-separated list — add your Vercel frontend URL here
+      # e.g.: https://prop-sync.vercel.app,https://propsync.nihalsingh571.vercel.app
+      - key: CLIENT_URL
+        sync: false
+
+      # ── Optional ──────────────────────────────────────────────────────────────
+      - key: LIVE_USERS_POLL_MS
+        value: 30000
