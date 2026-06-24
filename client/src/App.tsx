@@ -89,15 +89,7 @@ const TenantRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return <>{children}</>;
 };
 
-const MaintenanceStaffRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, loading } = useAuth();
-  if (loading) return <LoadingScreen />;
-  if (!user) return <Navigate to="/login" />;
-  if (!user.roles?.includes('maintenance_staff') && !user.roles?.includes('property_owner') && !user.roles?.includes('admin')) {
-    return <Navigate to="/dashboard" />;
-  }
-  return <>{children}</>;
-};
+
 
 // Phase 7: future route guards here
 
@@ -152,8 +144,8 @@ const AppContent: React.FC = () => {
           <Route path="/admin/tenants" element={<AdminRoute><AdminTenants /></AdminRoute>} />
 
           {/* Phase 6: Maintenance */}
-          <Route path="/maintenance" element={<MaintenanceStaffRoute><MaintenanceList /></MaintenanceStaffRoute>} />
-          <Route path="/maintenance/:id" element={<MaintenanceStaffRoute><MaintenanceDetail /></MaintenanceStaffRoute>} />
+          <Route path="/maintenance" element={<ProtectedRoute><MaintenanceList /></ProtectedRoute>} />
+          <Route path="/maintenance/:id" element={<ProtectedRoute><MaintenanceDetail /></ProtectedRoute>} />
           <Route path="/admin/maintenance" element={<AdminRoute><AdminMaintenance /></AdminRoute>} />
 
           {/* Phase 7: Amenities */}

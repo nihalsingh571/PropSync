@@ -147,12 +147,12 @@ const TenantDashboard: React.FC = () => {
             <div className="dash-card__header"><span className="dash-card__title">⚡ Quick Actions</span></div>
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
               {[
-                { label: '🔧 New Maintenance Request', to: '/maintenance' },
+                { label: '🔧 New Maintenance Request', to: '/maintenance', state: { openNew: true } },
                 { label: '🏊 Book Amenity',           to: '/amenities' },
                 { label: '📋 My Lease',               to: '/my-lease' },
                 { label: '🔔 Notifications',          to: '/notifications' }
               ].map(l => (
-                <Link key={l.to} to={l.to} style={{
+                <Link key={l.to} to={l.to} state={l.state} style={{
                   padding: '0.6rem 1.1rem', background: 'rgba(79,70,229,0.1)', border: '1px solid rgba(79,70,229,0.2)',
                   borderRadius: 10, textDecoration: 'none', color: '#818cf8', fontSize: '0.82rem', fontWeight: 600, transition: 'background 0.15s'
                 }}>

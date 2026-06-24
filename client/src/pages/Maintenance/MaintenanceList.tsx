@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { maintenanceApi } from '../../lib/maintenanceApi';
 import type { MaintenanceStatus, MaintenancePriority, MaintenanceCategory, CreateMaintenancePayload, ListMaintenanceParams } from '../../lib/maintenanceApi';
 import { PRIORITY_CONFIG, STATUS_CONFIG, CATEGORY_LABELS } from '../../lib/maintenanceApi';
+import { tenantApi } from '../../lib/tenantApi';
 import MaintenanceCard from '../../components/Maintenance/MaintenanceCard';
 import Modal from '../../components/Admin/Modal';
 import { useToast } from '../../contexts/ToastContext';
@@ -19,6 +20,7 @@ const MaintenanceList: React.FC = () => {
   const { showToast } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const isTenant = user?.roles?.includes('tenant');
   const isAdmin  = user?.roles?.includes('admin');
@@ -27,13 +29,28 @@ const MaintenanceList: React.FC = () => {
   const [filters, setFilters] = useState<ListMaintenanceParams>({ page: 1, limit: 12 });
   const [showNewModal, setShowNewModal] = useState(false);
 
+  useEffect(() => {
+    if (location.state?.openNew && isTenant) {
+      setShowNewModal(true);
+      // Clean up state so it doesn't reopen on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, isTenant]);
+
   // ── Queries ────────────────────────────────────────────────────────────────
   const statsQuery = useQuery({ queryKey: ['maint-stats'], queryFn: maintenanceApi.stats, staleTime: 30_000 });
   const listQuery  = useQuery({ queryKey: ['maintenance', filters], queryFn: () => maintenanceApi.list(filters), staleTime: 15_000 });
   const propertiesQuery = useQuery({
     queryKey: ['properties-for-maint'],
     queryFn: () => propertyApi.list({ limit: 200 }),
-    enabled: isTenant || isAdmin,
+    enabled: isOwner || isAdmin,
+    staleTime: 60_000
+  });
+  
+  const tenantQuery = useQuery({
+    queryKey: ['my-tenant-profile'],
+    queryFn: tenantApi.me,
+    enabled: isTenant,
     staleTime: 60_000
   });
 
@@ -59,6 +76,7 @@ const MaintenanceList: React.FC = () => {
   const stats = statsQuery.data;
   const { requests = [], meta } = listQuery.data ?? {};
   const properties = propertiesQuery.data?.properties ?? [];
+  const tenantProfile = tenantQuery.data;
 
   return (
     <div className="properties-page">
@@ -162,6 +180,7 @@ const MaintenanceList: React.FC = () => {
       <Modal isOpen={showNewModal} title="New Maintenance Request" onClose={() => setShowNewModal(false)}>
         <NewRequestForm
           properties={properties}
+          tenantProfile={tenantProfile}
           onSubmit={(data, files) => createMutation.mutate({ data, files })}
           submitting={createMutation.isPending}
         />
@@ -173,14 +192,29 @@ const MaintenanceList: React.FC = () => {
 // ── New Request Form ──────────────────────────────────────────────────────────
 const NewRequestForm: React.FC<{
   properties: any[];
+  tenantProfile?: any;
   onSubmit: (data: CreateMaintenancePayload, files?: File[]) => void;
   submitting: boolean;
-}> = ({ properties, onSubmit, submitting }) => {
+}> = ({ properties, tenantProfile, onSubmit, submitting }) => {
   const [form, setForm] = useState<CreateMaintenancePayload>({
-    propertyId: '', unitNumber: '', title: '', description: '',
-    category: 'other', priority: 'medium'
+    propertyId: tenantProfile?.propertyId?._id || tenantProfile?.propertyId || '',
+    unitNumber: tenantProfile?.unitNumber || '',
+    title: '', 
+    description: '',
+    category: 'other', 
+    priority: 'medium'
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
+  useEffect(() => {
+    if (tenantProfile) {
+      setForm(prev => ({
+        ...prev,
+        propertyId: tenantProfile.propertyId?._id || tenantProfile.propertyId || '',
+        unitNumber: tenantProfile.unitNumber || ''
+      }));
+    }
+  }, [tenantProfile]);
 
   const selectedProp = properties.find(p => p._id === form.propertyId);
   const myUnits = selectedProp?.units ?? [];
@@ -191,7 +225,7 @@ const NewRequestForm: React.FC<{
   return (
     <div className="property-form">
       <div className="prop-form-grid">
-        {properties.length > 0 && (
+        {properties.length > 0 && !tenantProfile && (
           <div className="form-group">
             <label className="form-label">Property</label>
             <select className="form-input" value={form.propertyId} onChange={e => set('propertyId', e.target.value)} disabled={submitting}>
@@ -200,17 +234,25 @@ const NewRequestForm: React.FC<{
             </select>
           </div>
         )}
-        <div className="form-group">
-          <label className="form-label">Unit Number *</label>
-          {myUnits.length > 0 ? (
-            <select className="form-input" value={form.unitNumber} onChange={e => set('unitNumber', e.target.value)} disabled={submitting}>
-              <option value="">Select Unit</option>
-              {myUnits.map((u: any) => <option key={u._id} value={u.unitNumber}>{u.unitNumber}</option>)}
-            </select>
-          ) : (
-            <input className="form-input" value={form.unitNumber} onChange={e => set('unitNumber', e.target.value)} placeholder="e.g. A-101" disabled={submitting} />
-          )}
-        </div>
+        {!tenantProfile && (
+          <div className="form-group">
+            <label className="form-label">Unit Number *</label>
+            {myUnits.length > 0 ? (
+              <select className="form-input" value={form.unitNumber} onChange={e => set('unitNumber', e.target.value)} disabled={submitting}>
+                <option value="">Select Unit</option>
+                {myUnits.map((u: any) => <option key={u._id} value={u.unitNumber}>{u.unitNumber}</option>)}
+              </select>
+            ) : (
+              <input className="form-input" value={form.unitNumber} onChange={e => set('unitNumber', e.target.value)} placeholder="e.g. A-101" disabled={submitting} />
+            )}
+          </div>
+        )}
+        {tenantProfile && (
+          <div className="form-group form-group--full" style={{ padding: '0.75rem', background: 'rgba(79,70,229,0.1)', borderRadius: '8px', color: '#818cf8', fontSize: '0.85rem' }}>
+            <strong>Property:</strong> {tenantProfile.propertyId?.name || 'Assigned Property'} <br/>
+            <strong>Unit:</strong> {tenantProfile.unitNumber}
+          </div>
+        )}
         <div className="form-group">
           <label className="form-label">Category *</label>
           <select className="form-input" value={form.category} onChange={e => set('category', e.target.value as MaintenanceCategory)} disabled={submitting}>
