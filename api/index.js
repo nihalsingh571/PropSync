@@ -1,5 +1,5 @@
-import app from '../server.js';
-import connectDB from '../config/database.js';
+import app from '../server/server.js';
+import connectDB from '../server/config/database.js';
 
 // Cache the database connection
 let isConnected = false;

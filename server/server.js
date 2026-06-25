@@ -3,7 +3,6 @@ import connectDB from './config/database.js';
 import createApp from './app.js';
 
 dotenv.config();
-connectDB();
 
 // Configure CORS so credentialed requests from the client aren't rejected
 const allowedOrigins = (process.env.CLIENT_URL || '')
@@ -17,6 +16,7 @@ const PORT = process.env.PORT || 8000;
 
 // Only listen if running directly (not imported as a module for Vercel/Render)
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  connectDB();
   app.listen(PORT, () => {
     console.log(`🚀 PropSync Server running on port ${PORT}`);
     console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
