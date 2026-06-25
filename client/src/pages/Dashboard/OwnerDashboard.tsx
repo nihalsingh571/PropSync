@@ -7,7 +7,7 @@ import { maintenanceApi } from '../../lib/maintenanceApi';
 import { amenityApi } from '../../lib/amenityApi';
 import '../Properties/Properties.css';
 import '../../components/Shared/Shared.css';
-import { Skeleton, SkeletonStat, SkeletonCard } from '../../components/Shared/Skeleton';
+import { SkeletonStat, SkeletonCard } from '../../components/Shared/Skeleton';
 
 const OwnerDashboard: React.FC = () => {
   const propQuery    = useQuery({ queryKey: ['owner-prop-stats'],  queryFn: () => propertyApi.list({ limit: 1 }), staleTime: 60_000 });

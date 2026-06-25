@@ -8,7 +8,7 @@ import { notificationApi } from '../../lib/notificationApi';
 import { NOTIFICATION_ICONS } from '../../lib/notificationApi';
 import '../Properties/Properties.css';
 import '../../components/Shared/Shared.css';
-import { Skeleton, SkeletonStat } from '../../components/Shared/Skeleton';
+import { SkeletonStat } from '../../components/Shared/Skeleton';
 
 const TenantDashboard: React.FC = () => {
   const tenantQuery  = useQuery({ queryKey: ['my-tenant-profile'], queryFn: tenantApi.me, retry: false, staleTime: 60_000 });
