@@ -28,7 +28,6 @@ import AvailableProperties from './pages/Properties/AvailableProperties';
 import AdminProperties from './pages/Admin/AdminProperties';
 import AdminTenants from './pages/Admin/AdminTenants';
 import TenantProfile from './pages/Tenants/TenantProfile';
-import Messages from './pages/Messages/Messages';
 import MaintenanceList from './pages/Maintenance/MaintenanceList';
 import MaintenanceDetail from './pages/Maintenance/MaintenanceDetail';
 import AdminMaintenance from './pages/Admin/AdminMaintenance';
@@ -159,9 +158,6 @@ const AppContent: React.FC = () => {
 
           {/* Phase 8: Notifications + Dashboards */}
           <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
-
-          {/* Phase 9: Messages */}
-          <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
 
           {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" />} />

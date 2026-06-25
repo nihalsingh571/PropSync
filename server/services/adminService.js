@@ -2,10 +2,6 @@ import mongoose from 'mongoose';
 import User from '../models/userModel.js';
 import AdminActivityLog from '../models/adminActivityLogModel.js';
 import { Parser } from 'json2csv';
-import {
-  emitAdminActionEvent,
-  emitSystemAlert
-} from './realtimeService.js';
 
 // ─── Record Admin Action (Audit Log) ─────────────────────────────────────────
 
@@ -17,13 +13,6 @@ export const recordAdminAction = async ({ adminId, action, entityType, entityId,
     entityId,
     metadata,
     ipAddress: req?.ip
-  });
-  emitAdminActionEvent({
-    adminId,
-    action,
-    entityType,
-    entityId,
-    metadata
   });
   return log;
 };
@@ -198,11 +187,6 @@ export const triggerBackup = async ({ actorId, req }) => {
     entityId: jobId,
     metadata: { status: 'queued' },
     req
-  });
-  emitSystemAlert({
-    severity: 'info',
-    message: 'Backup job queued',
-    jobId
   });
   return { jobId, status: 'queued' };
 };

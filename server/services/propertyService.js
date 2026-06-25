@@ -5,7 +5,6 @@
 import Property from '../models/propertyModel.js';
 import Tenant from '../models/tenantModel.js';
 import PropertyApplication from '../models/propertyApplicationModel.js';
-import { Conversation } from '../models/messageModel.js';
 import mongoose from 'mongoose';
 
 // ── List Properties ────────────────────────────────────────────────────────────
@@ -314,19 +313,6 @@ export const updateApplicationStatus = async (applicationId, status, ownerId = n
 
   application.status = status;
   await application.save();
-
-  // Auto-create a Conversation when booking is approved
-  if (status === 'approved') {
-    const existingConv = await Conversation.findOne({ applicationId: application._id });
-    if (!existingConv) {
-      const ownr = application.propertyId.ownerId;
-      await Conversation.create({
-        participants: [application.tenantId, ownr],
-        propertyId: application.propertyId._id,
-        applicationId: application._id
-      });
-    }
-  }
 
   return application;
 };

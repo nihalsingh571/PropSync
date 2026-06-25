@@ -10,8 +10,6 @@ import tenantRoutes from './routes/tenantRoutes.js';
 import maintenanceRoutes from './routes/maintenanceRoutes.js';
 import amenityRoutes from './routes/amenityRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
-import messageRoutes from './routes/messageRoutes.js';
-
 // ─── PropSync Route Imports (added progressively per phase) ─────────────────
 // Phase 8:  import bookingRoutes from './routes/bookingRoutes.js';
 // Phase 9:  import notificationRoutes from './routes/notificationRoutes.js';
@@ -50,7 +48,6 @@ export const createApp = ({ allowedOrigins = [] } = {}) => {
   app.use('/api/maintenance', maintenanceRoutes);   // Phase 6 ✅
   app.use('/api/amenities', amenityRoutes);          // Phase 7 ✅
   app.use('/api/notifications', notificationRoutes); // Phase 8 ✅
-  app.use('/api/messages', messageRoutes);            // Phase 9 ✅
 
   app.get('/', (req, res) => {
     res.json({

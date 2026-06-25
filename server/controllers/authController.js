@@ -1,7 +1,6 @@
 // server/controllers/authController.js — PropSync v2
 import User from '../models/userModel.js';
 import jwt from 'jsonwebtoken';
-import { emitNewUserRegistered } from '../services/realtimeService.js';
 
 // ── Valid roles for self-registration ─────────────────────────────────────────
 // Admins are created by the seed script or by existing admins only
@@ -47,14 +46,6 @@ export const registerUser = async (req, res) => {
       phone: phone || null,
       roles: [assignedRole]
     });
-
-    emitNewUserRegistered({
-      userId: user._id,
-      name: user.name,
-      email: user.email,
-      role: assignedRole
-    });
-
     return res.status(201).json(buildUserResponse(user, generateToken(user._id)));
   } catch (error) {
     console.error('Register error:', error);

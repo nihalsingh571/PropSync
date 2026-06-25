@@ -1,9 +1,7 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { tenantApi } from '../../lib/tenantApi';
-import { messageApi } from '../../lib/messageApi';
-import { useToast } from '../../contexts/ToastContext';
 import { maintenanceApi } from '../../lib/maintenanceApi';
 import { amenityApi } from '../../lib/amenityApi';
 import { notificationApi } from '../../lib/notificationApi';
@@ -13,9 +11,6 @@ import '../../components/Shared/Shared.css';
 import { Skeleton, SkeletonStat } from '../../components/Shared/Skeleton';
 
 const TenantDashboard: React.FC = () => {
-  const navigate = useNavigate();
-  const { showToast } = useToast();
-
   const tenantQuery  = useQuery({ queryKey: ['my-tenant-profile'], queryFn: tenantApi.me, retry: false, staleTime: 60_000 });
   const maintQuery   = useQuery({ queryKey: ['maint-stats'],       queryFn: maintenanceApi.stats, staleTime: 30_000 });
   const bookingQuery = useQuery({ queryKey: ['my-amenity-bookings-dash'], queryFn: () => amenityApi.myBookings({ limit: 3, status: 'confirmed' }), staleTime: 30_000 });
@@ -26,16 +21,6 @@ const TenantDashboard: React.FC = () => {
   const bookings = bookingQuery.data?.bookings ?? [];
   const notifs   = notifQuery.data?.notifications ?? [];
   const unread   = notifQuery.data?.unreadCount ?? 0;
-
-  const startChatMutation = useMutation({
-    mutationFn: messageApi.startTenantChat,
-    onSuccess: (data) => {
-      navigate('/messages');
-    },
-    onError: (err: any) => {
-      showToast(err?.response?.data?.message || 'Failed to start chat', 'error');
-    }
-  });
 
   // Lease progress
   let leaseProgress = 0;
@@ -56,21 +41,11 @@ const TenantDashboard: React.FC = () => {
             <h1 className="page-title">👋 My Dashboard</h1>
             <p className="page-subtitle">{tenant?.propertyId && typeof tenant.propertyId === 'object' ? `${(tenant.propertyId as any).name} · Unit ${tenant.unitNumber}` : 'Welcome back'}</p>
           </div>
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <button 
-              className="btn btn-primary" 
-              style={{ fontSize: '0.85rem' }}
-              onClick={() => startChatMutation.mutate()}
-              disabled={startChatMutation.isPending || !tenant}
-            >
-              💬 Message Owner
-            </button>
-            {unread > 0 && (
-              <Link to="/notifications" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '0.5rem 1rem', borderRadius: 10, textDecoration: 'none', fontSize: '0.85rem', fontWeight: 700 }}>
-                🔔 {unread} unread
-              </Link>
-            )}
-          </div>
+          {unread > 0 && (
+            <Link to="/notifications" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '0.5rem 1rem', borderRadius: 10, textDecoration: 'none', fontSize: '0.85rem', fontWeight: 700 }}>
+              🔔 {unread} unread
+            </Link>
+          )}
         </div>
 
         {/* ── KPI Strip ──────────────────────────────────────────────── */}

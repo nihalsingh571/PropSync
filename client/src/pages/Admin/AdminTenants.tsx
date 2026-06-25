@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../../components/Admin/AdminLayout';
 import AdminHeader from '../../components/Admin/AdminHeader';
 import Modal from '../../components/Admin/Modal';
@@ -24,7 +23,6 @@ const STATUS_OPTIONS: { value: TenantStatus | ''; label: string }[] = [
 const AdminTenants: React.FC = () => {
   const { showToast } = useToast();
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const { user } = useAuth();
   const isAdmin = user?.roles?.includes('admin');
 
@@ -260,11 +258,6 @@ const AdminTenants: React.FC = () => {
                         <button className="btn-prop btn-prop--primary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }} onClick={() => updateApplicationMutation.mutate({ id: app._id, status: 'approved' })}>Approve</button>
                         <button className="btn-prop btn-prop--danger" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }} onClick={() => updateApplicationMutation.mutate({ id: app._id, status: 'rejected' })}>Reject</button>
                       </div>
-                    )}
-                    {app.status === 'approved' && (
-                      <button className="btn-prop btn-prop--secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }} onClick={() => navigate('/messages')}>
-                        💬 Chat
-                      </button>
                     )}
                   </td>
                 </tr>
