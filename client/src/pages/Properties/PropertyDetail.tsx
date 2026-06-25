@@ -101,13 +101,16 @@ const PropertyDetail: React.FC = () => {
     </div>
   );
 
+  const isTenant = user?.roles?.includes('tenant') && !isAdmin && !isOwner;
+  const backLink = isTenant ? '/available-properties' : '/properties';
+
   if (isError || !property) return (
     <div className="properties-page">
       <div className="page-container">
         <div className="empty-state">
           <div className="empty-icon">⚠️</div>
           <h3>Property not found</h3>
-          <Link to="/properties" className="btn btn-primary">← Back to Properties</Link>
+          <Link to={backLink} className="btn btn-primary">← Back to Properties</Link>
         </div>
       </div>
     </div>
@@ -122,7 +125,7 @@ const PropertyDetail: React.FC = () => {
 
         {/* ── Breadcrumb ───────────────────────────────────────────────────── */}
         <div className="breadcrumb">
-          <Link to="/properties" className="breadcrumb__link">Properties</Link>
+          <Link to={backLink} className="breadcrumb__link">Properties</Link>
           <span className="breadcrumb__sep">›</span>
           <span>{property.name}</span>
         </div>
@@ -225,6 +228,28 @@ const PropertyDetail: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* ── Furnishing Details ────────────────────────────────────────────── */}
+        {property.furnishings && property.furnishings.length > 0 && (
+          <div className="detail-section">
+            <h2 className="detail-section__title">Furnishing Details</h2>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+              {property.furnishings.map(item => (
+                <span key={item} style={{
+                  background: 'rgba(59, 130, 246, 0.1)',
+                  color: '#60a5fa',
+                  padding: '0.35rem 0.75rem',
+                  borderRadius: '999px',
+                  fontSize: '0.85rem',
+                  fontWeight: 500,
+                  border: '1px solid rgba(59, 130, 246, 0.2)'
+                }}>
+                  ✓ {item}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ── Units Table ─────────────────────────────────────────────────── */}
         <div className="detail-section">

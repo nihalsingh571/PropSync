@@ -1,15 +1,21 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { Link, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { tenantApi } from '../../lib/tenantApi';
+import { messageApi } from '../../lib/messageApi';
+import { useToast } from '../../contexts/ToastContext';
 import { maintenanceApi } from '../../lib/maintenanceApi';
 import { amenityApi } from '../../lib/amenityApi';
 import { notificationApi } from '../../lib/notificationApi';
 import { NOTIFICATION_ICONS } from '../../lib/notificationApi';
 import '../Properties/Properties.css';
 import '../../components/Shared/Shared.css';
+import { Skeleton, SkeletonStat } from '../../components/Shared/Skeleton';
 
 const TenantDashboard: React.FC = () => {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+
   const tenantQuery  = useQuery({ queryKey: ['my-tenant-profile'], queryFn: tenantApi.me, retry: false, staleTime: 60_000 });
   const maintQuery   = useQuery({ queryKey: ['maint-stats'],       queryFn: maintenanceApi.stats, staleTime: 30_000 });
   const bookingQuery = useQuery({ queryKey: ['my-amenity-bookings-dash'], queryFn: () => amenityApi.myBookings({ limit: 3, status: 'confirmed' }), staleTime: 30_000 });
@@ -20,6 +26,16 @@ const TenantDashboard: React.FC = () => {
   const bookings = bookingQuery.data?.bookings ?? [];
   const notifs   = notifQuery.data?.notifications ?? [];
   const unread   = notifQuery.data?.unreadCount ?? 0;
+
+  const startChatMutation = useMutation({
+    mutationFn: messageApi.startTenantChat,
+    onSuccess: (data) => {
+      navigate('/messages');
+    },
+    onError: (err: any) => {
+      showToast(err?.response?.data?.message || 'Failed to start chat', 'error');
+    }
+  });
 
   // Lease progress
   let leaseProgress = 0;
@@ -40,16 +56,34 @@ const TenantDashboard: React.FC = () => {
             <h1 className="page-title">👋 My Dashboard</h1>
             <p className="page-subtitle">{tenant?.propertyId && typeof tenant.propertyId === 'object' ? `${(tenant.propertyId as any).name} · Unit ${tenant.unitNumber}` : 'Welcome back'}</p>
           </div>
-          {unread > 0 && (
-            <Link to="/notifications" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '0.5rem 1rem', borderRadius: 10, textDecoration: 'none', fontSize: '0.85rem', fontWeight: 700 }}>
-              🔔 {unread} unread
-            </Link>
-          )}
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <button 
+              className="btn btn-primary" 
+              style={{ fontSize: '0.85rem' }}
+              onClick={() => startChatMutation.mutate()}
+              disabled={startChatMutation.isPending || !tenant}
+            >
+              💬 Message Owner
+            </button>
+            {unread > 0 && (
+              <Link to="/notifications" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '0.5rem 1rem', borderRadius: 10, textDecoration: 'none', fontSize: '0.85rem', fontWeight: 700 }}>
+                🔔 {unread} unread
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* ── KPI Strip ──────────────────────────────────────────────── */}
-        <div className="prop-stats-strip" style={{ marginBottom: '1.5rem' }}>
-          <div className="prop-stat-pill">
+        {maintQuery.isLoading ? (
+          <div className="prop-stats-strip" style={{ marginBottom: '1.5rem' }}>
+            <SkeletonStat />
+            <SkeletonStat />
+            <SkeletonStat />
+            <SkeletonStat />
+          </div>
+        ) : (
+          <div className="prop-stats-strip" style={{ marginBottom: '1.5rem' }}>
+            <div className="prop-stat-pill">
             <span className="prop-stat-pill__num">{maint?.open ?? '—'}</span>
             <span>Open Requests</span>
           </div>
@@ -66,6 +100,7 @@ const TenantDashboard: React.FC = () => {
             <span>Upcoming Bookings</span>
           </div>
         </div>
+        )}
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
           {/* ── Lease Progress ────────────────────────────────────────── */}
@@ -89,7 +124,12 @@ const TenantDashboard: React.FC = () => {
                 <div style={{ textAlign: 'center', marginTop: '0.4rem', fontSize: '0.75rem', color: '#64748b' }}>{leaseProgress}% through lease</div>
               </>
             ) : (
-              <p style={{ color: '#64748b', fontSize: '0.85rem' }}>No active lease found.</p>
+              <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+                <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1rem' }}>No active lease found.</p>
+                <Link to="/available-properties" className="btn btn-primary" style={{ textDecoration: 'none', display: 'inline-block' }}>
+                  Browse Available Properties
+                </Link>
+              </div>
             )}
           </div>
 

@@ -64,6 +64,9 @@ const propertySchema = new mongoose.Schema({
   // This field is a denormalized count for quick display
   amenityCount: { type: Number, default: 0 },
 
+  // ── Furnishings ───────────────────────────────────────────────────────────────
+  furnishings: [{ type: String }],
+
   // ── Media ─────────────────────────────────────────────────────────────────────
   images: [{ type: String }],
   coverImage: { type: String, default: null },

@@ -7,6 +7,7 @@ import { maintenanceApi } from '../../lib/maintenanceApi';
 import { amenityApi } from '../../lib/amenityApi';
 import '../Properties/Properties.css';
 import '../../components/Shared/Shared.css';
+import { Skeleton, SkeletonStat, SkeletonCard } from '../../components/Shared/Skeleton';
 
 const OwnerDashboard: React.FC = () => {
   const propQuery    = useQuery({ queryKey: ['owner-prop-stats'],  queryFn: () => propertyApi.list({ limit: 1 }), staleTime: 60_000 });
@@ -37,10 +38,14 @@ const OwnerDashboard: React.FC = () => {
         </div>
 
         {/* ── KPI Grid ──────────────────────────────────────────────── */}
+        {/* ── KPI Grid ──────────────────────────────────────────────── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px,1fr))', gap: '0.85rem', marginBottom: '1.5rem' }}>
-          {[
-            { label: 'Properties',    value: totalProps,        icon: '🏢', color: '#818cf8' },
-            { label: 'Active Tenants', value: ts?.active ?? 0,  icon: '🙋', color: '#10b981' },
+          {tenantQuery.isLoading || maintQuery.isLoading ? (
+            Array.from({ length: 6 }).map((_, i) => <SkeletonStat key={i} />)
+          ) : (
+            [
+              { label: 'Properties',    value: totalProps,        icon: '🏢', color: '#818cf8' },
+              { label: 'Active Tenants', value: ts?.active ?? 0,  icon: '🙋', color: '#10b981' },
             { label: 'Total Tenants',  value: ts?.total ?? 0,   icon: '📊', color: '#f59e0b' },
             { label: 'Open Requests',  value: ms?.open ?? 0,    icon: '🔧', color: '#ef4444' },
             { label: 'Urgent',         value: ms?.urgent ?? 0,  icon: '🚨', color: '#ef4444' },
@@ -51,7 +56,8 @@ const OwnerDashboard: React.FC = () => {
               <div style={{ fontSize: '1.5rem', fontWeight: 800, color: k.color }}>{k.value}</div>
               <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '0.1rem' }}>{k.label}</div>
             </div>
-          ))}
+          ))
+        )}
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
@@ -61,7 +67,9 @@ const OwnerDashboard: React.FC = () => {
               <span className="dash-card__title">⚠️ Expiring Leases</span>
               <Link to="/tenants" className="dash-card__link">View All →</Link>
             </div>
-            {expiring.length === 0 ? (
+            {expiringQuery.isLoading ? (
+              <SkeletonCard lines={2} />
+            ) : expiring.length === 0 ? (
               <p style={{ color: '#64748b', fontSize: '0.82rem' }}>No leases expiring soon.</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
@@ -87,7 +95,9 @@ const OwnerDashboard: React.FC = () => {
               <span className="dash-card__title">🚨 Urgent Maintenance</span>
               <Link to="/maintenance" className="dash-card__link">View All →</Link>
             </div>
-            {urgentMaint.length === 0 ? (
+            {maintListQuery.isLoading ? (
+              <SkeletonCard lines={3} />
+            ) : urgentMaint.length === 0 ? (
               <p style={{ color: '#64748b', fontSize: '0.82rem' }}>No urgent requests. 🎉</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>

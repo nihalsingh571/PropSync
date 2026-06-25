@@ -11,9 +11,10 @@ export const listProperties = async (req, res) => {
   try {
     const { status, city, type, page, limit, search } = req.query;
     const admin = isAdminUser(req.user);
+    const isTenant = req.user.roles?.includes('tenant') && !admin && !req.user.roles?.includes('property_owner');
 
     const result = await propertyService.listProperties({
-      ownerId: admin ? null : req.user._id.toString(),
+      ownerId: admin || isTenant ? null : req.user._id.toString(),
       status,
       city,
       type,
@@ -48,9 +49,18 @@ export const getProperty = async (req, res) => {
     const property = await propertyService.getPropertyById(req.params.id);
     if (!property) return res.status(404).json({ message: 'Property not found' });
 
+    const admin = isAdminUser(req.user);
+    const isTenant = req.user.roles?.includes('tenant') && !admin && !req.user.roles?.includes('property_owner');
+
+    // Tenants can view any active property
+    if (isTenant && property.status === 'active') {
+      return res.json(property);
+    }
+
     // Property owners can only view their own properties
     if (
-      !isAdminUser(req.user) &&
+      !admin &&
+      !isTenant &&
       property.ownerId?._id?.toString() !== req.user._id.toString() &&
       property.ownerId?.toString() !== req.user._id.toString()
     ) {
@@ -206,5 +216,40 @@ export const deleteUnit = async (req, res) => {
     if (err.message.includes('occupied')) return res.status(409).json({ message: err.message });
     if (err.message === 'Unit not found') return res.status(404).json({ message: err.message });
     return res.status(500).json({ message: err.message });
+  }
+};
+
+// ── Applications (Bookings) ───────────────────────────────────────────────────
+
+export const createApplication = async (req, res) => {
+  try {
+    const application = await propertyService.applyForProperty(req.user._id, req.params.id, req.body);
+    return res.status(201).json({ message: 'Application submitted successfully', application });
+  } catch (err) {
+    return res.status(400).json({ message: err.message });
+  }
+};
+
+export const getApplications = async (req, res) => {
+  try {
+    const admin = isAdminUser(req.user);
+    const applications = await propertyService.getApplications(admin ? null : req.user._id.toString());
+    return res.json(applications);
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+
+export const updateApplicationStatus = async (req, res) => {
+  try {
+    const admin = isAdminUser(req.user);
+    const application = await propertyService.updateApplicationStatus(
+      req.params.id,
+      req.body.status,
+      admin ? null : req.user._id.toString()
+    );
+    return res.json({ message: 'Application updated', application });
+  } catch (err) {
+    return res.status(400).json({ message: err.message });
   }
 };

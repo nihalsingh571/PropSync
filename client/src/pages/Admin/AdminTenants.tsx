@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../../components/Admin/AdminLayout';
 import AdminHeader from '../../components/Admin/AdminHeader';
 import Modal from '../../components/Admin/Modal';
@@ -8,6 +9,7 @@ import { tenantApi } from '../../lib/tenantApi';
 import type { Tenant, TenantStatus, CreateTenantPayload } from '../../lib/tenantApi';
 import { propertyApi } from '../../lib/propertyApi';
 import { useToast } from '../../contexts/ToastContext';
+import { useAuth } from '../../contexts/AuthContext';
 import '../../components/Shared/Shared.css';
 import '../../pages/Properties/Properties.css';
 
@@ -22,7 +24,11 @@ const STATUS_OPTIONS: { value: TenantStatus | ''; label: string }[] = [
 const AdminTenants: React.FC = () => {
   const { showToast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.roles?.includes('admin');
 
+  const [activeTab, setActiveTab] = useState<'tenants' | 'requests'>('tenants');
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<TenantStatus | ''>('');
   const [page, setPage] = useState(1);
@@ -55,6 +61,12 @@ const AdminTenants: React.FC = () => {
     queryKey: ['properties-for-select'],
     queryFn: () => propertyApi.list({ limit: 200, status: 'active' }),
     staleTime: 60_000
+  });
+
+  const applicationsQuery = useQuery({
+    queryKey: ['admin-applications'],
+    queryFn: propertyApi.getApplications,
+    staleTime: 30_000
   });
 
   // ── Mutations ──────────────────────────────────────────────────────────────
@@ -91,15 +103,26 @@ const AdminTenants: React.FC = () => {
     onError: (err: any) => showToast(err?.response?.data?.message || 'Cannot delete', 'error')
   });
 
+  const updateApplicationMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: 'approved' | 'rejected' }) => propertyApi.updateApplicationStatus(id, status),
+    onSuccess: () => {
+      showToast('Booking request updated', 'success');
+      queryClient.invalidateQueries({ queryKey: ['admin-applications'] });
+    },
+    onError: (err: any) => showToast(err?.response?.data?.message || 'Update failed', 'error')
+  });
+
   const stats = statsQuery.data;
   const tenants = tenantsQuery.data?.tenants ?? [];
   const meta = tenantsQuery.data?.meta;
   const properties = propertiesQuery.data?.properties ?? [];
+  const applications = applicationsQuery.data ?? [];
+  const pendingRequestsCount = applications.filter(a => a.status === 'pending').length;
 
-  return (
-    <AdminLayout>
+  const content = (
+    <>
       <AdminHeader
-        title="Tenant Management"
+        title={isAdmin ? "Tenant Management" : "My Tenants & Requests"}
         onRefresh={() => {
           setLastRefresh(new Date());
           queryClient.invalidateQueries({ queryKey: ['admin-tenants'] });
@@ -146,7 +169,27 @@ const AdminTenants: React.FC = () => {
         </div>
       )}
 
-      {/* ── Toolbar ───────────────────────────────────────────────────────── */}
+      {/* ── Tabs ──────────────────────────────────────────────────────────── */}
+      <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid #334155', marginBottom: '1.5rem', paddingBottom: '0.5rem' }}>
+        <button 
+          className={`btn ${activeTab === 'tenants' ? 'btn-primary' : 'btn-secondary'}`}
+          onClick={() => setActiveTab('tenants')}
+          style={{ background: activeTab === 'tenants' ? undefined : 'transparent', border: 'none' }}
+        >
+          Leased Tenants
+        </button>
+        <button 
+          className={`btn ${activeTab === 'requests' ? 'btn-primary' : 'btn-secondary'}`}
+          onClick={() => setActiveTab('requests')}
+          style={{ background: activeTab === 'requests' ? undefined : 'transparent', border: 'none' }}
+        >
+          Booking Requests {pendingRequestsCount > 0 && <span style={{ background: '#ef4444', color: '#fff', padding: '0.1rem 0.4rem', borderRadius: 999, fontSize: '0.75rem', marginLeft: '0.5rem' }}>{pendingRequestsCount}</span>}
+        </button>
+      </div>
+
+      {activeTab === 'tenants' ? (
+        <>
+          {/* ── Toolbar ───────────────────────────────────────────────────────── */}
       <div className="prop-filters" style={{ marginBottom: '1rem' }}>
         <button className="btn btn-primary" style={{ fontSize: '0.85rem', padding: '0.5rem 1rem' }}
           onClick={() => setShowCreateModal(true)}>
@@ -180,6 +223,57 @@ const AdminTenants: React.FC = () => {
           <button className="btn-prop btn-prop--secondary" disabled={page === 1} onClick={() => setPage(p => p - 1)}>← Prev</button>
           <span className="pagination__info">Page {meta.page} of {meta.totalPages} ({meta.total} tenants)</span>
           <button className="btn-prop btn-prop--secondary" disabled={page === meta.totalPages} onClick={() => setPage(p => p + 1)}>Next →</button>
+        </div>
+      )}
+      </>
+      ) : (
+        <div className="table-wrapper">
+          <table className="prop-table">
+            <thead>
+              <tr>
+                <th>Applicant</th>
+                <th>Property</th>
+                <th>Unit</th>
+                <th>Message</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {applications.map(app => (
+                <tr key={app._id}>
+                  <td>
+                    <div style={{ fontWeight: 600, color: '#f1f5f9' }}>{app.tenantId?.name}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{app.tenantId?.email}</div>
+                  </td>
+                  <td>{app.propertyId?.name}</td>
+                  <td>{app.unitNumber || 'Any Unit'}</td>
+                  <td style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{app.message || '—'}</td>
+                  <td>
+                    <span className={`status-pill status-${app.status}`}>
+                      {app.status}
+                    </span>
+                  </td>
+                  <td>
+                    {app.status === 'pending' && (
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button className="btn-prop btn-prop--primary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }} onClick={() => updateApplicationMutation.mutate({ id: app._id, status: 'approved' })}>Approve</button>
+                        <button className="btn-prop btn-prop--danger" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }} onClick={() => updateApplicationMutation.mutate({ id: app._id, status: 'rejected' })}>Reject</button>
+                      </div>
+                    )}
+                    {app.status === 'approved' && (
+                      <button className="btn-prop btn-prop--secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }} onClick={() => navigate('/messages')}>
+                        💬 Chat
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+              {applications.length === 0 && (
+                <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>No booking requests found.</td></tr>
+              )}
+            </tbody>
+          </table>
         </div>
       )}
 
@@ -228,7 +322,19 @@ const AdminTenants: React.FC = () => {
       </Modal>
 
       <style>{bannerStyles}</style>
-    </AdminLayout>
+    </>
+  );
+
+  if (isAdmin) {
+    return <AdminLayout>{content}</AdminLayout>;
+  }
+
+  return (
+    <div className="properties-page">
+      <div className="page-container" style={{ padding: '2rem 0' }}>
+        {content}
+      </div>
+    </div>
   );
 };
 

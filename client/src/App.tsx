@@ -24,9 +24,11 @@ import { AdminRealtimeProvider } from './contexts/AdminRealtimeContext';
 // ─── Pages: PropSync Features (enabled progressively) ────────────────────────
 import Properties from './pages/Properties/Properties';
 import PropertyDetail from './pages/Properties/PropertyDetail';
+import AvailableProperties from './pages/Properties/AvailableProperties';
 import AdminProperties from './pages/Admin/AdminProperties';
 import AdminTenants from './pages/Admin/AdminTenants';
 import TenantProfile from './pages/Tenants/TenantProfile';
+import Messages from './pages/Messages/Messages';
 import MaintenanceList from './pages/Maintenance/MaintenanceList';
 import MaintenanceDetail from './pages/Maintenance/MaintenanceDetail';
 import AdminMaintenance from './pages/Admin/AdminMaintenance';
@@ -134,9 +136,12 @@ const AppContent: React.FC = () => {
           <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
           <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
 
-          {/* Phase 4: Properties */}
+          {/* Phase 4: Properties & Tenants (Owner) */}
           <Route path="/properties" element={<PropertyOwnerRoute><Properties /></PropertyOwnerRoute>} />
           <Route path="/properties/:id" element={<ProtectedRoute><PropertyDetail /></ProtectedRoute>} />
+          <Route path="/tenants" element={<PropertyOwnerRoute><AdminTenants /></PropertyOwnerRoute>} />
+          
+          <Route path="/available-properties" element={<TenantRoute><AvailableProperties /></TenantRoute>} />
           <Route path="/admin/properties" element={<AdminRoute><AdminProperties /></AdminRoute>} />
 
           {/* Phase 5: Tenant */}
@@ -154,6 +159,9 @@ const AppContent: React.FC = () => {
 
           {/* Phase 8: Notifications + Dashboards */}
           <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+
+          {/* Phase 9: Messages */}
+          <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
 
           {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" />} />

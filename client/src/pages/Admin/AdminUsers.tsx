@@ -65,9 +65,10 @@ const AdminUsers: React.FC = () => {
     if (!usersQuery.data) return [];
     return usersQuery.data.filter((user) => {
       const matchesSearch =
-        user.name.toLowerCase().includes(search.toLowerCase()) ||
-        user.email.toLowerCase().includes(search.toLowerCase());
-      const isAdminUser = user.roles?.includes('admin') || user.isAdmin;
+        (user.name?.toLowerCase() || '').includes(search.toLowerCase()) ||
+        (user.email?.toLowerCase() || '').includes(search.toLowerCase());
+      const rolesArray = Array.isArray(user.roles) ? user.roles : (typeof user.roles === 'string' ? [user.roles] : []);
+      const isAdminUser = rolesArray.includes('admin') || user.isAdmin;
       const matchesRole =
         roleFilter === 'all' || (roleFilter === 'admin' ? isAdminUser : !isAdminUser);
       return matchesSearch && matchesRole;
@@ -99,7 +100,10 @@ const AdminUsers: React.FC = () => {
     {
       accessorKey: 'roles',
       header: 'Roles',
-      cell: ({ row }) => (row.original.roles ? row.original.roles.join(', ') : 'user')
+      cell: ({ row }) => {
+        const r = row.original.roles;
+        return Array.isArray(r) ? r.join(', ') : (typeof r === 'string' ? r : 'user');
+      }
     },
     {
       accessorKey: 'city',
@@ -127,7 +131,8 @@ const AdminUsers: React.FC = () => {
       id: 'actions',
       header: 'Actions',
       cell: ({ row }) => {
-        const isAdminUser = row.original.roles?.includes('admin') || row.original.isAdmin;
+        const rolesArray = Array.isArray(row.original.roles) ? row.original.roles : (typeof row.original.roles === 'string' ? [row.original.roles] : []);
+        const isAdminUser = rolesArray.includes('admin') || row.original.isAdmin;
         return (
           <div className="admin-user-actions">
             <button
@@ -255,7 +260,7 @@ const UserDetailModal: React.FC<{
             <div className="admin-user-details__grid">
               <span>Name: {data.user.name}</span>
               <span>Email: {data.user.email}</span>
-              <span>Roles: {data.user.roles?.join(', ') || 'user'}</span>
+              <span>Roles: {Array.isArray(data.user.roles) ? data.user.roles.join(', ') : (typeof data.user.roles === 'string' ? data.user.roles : 'user')}</span>
               <span>Status: {data.user.suspended ? 'Suspended' : 'Active'}</span>
               <span>Last Active: {data.user.lastActive ? new Date(data.user.lastActive).toLocaleString() : '—'}</span>
             </div>

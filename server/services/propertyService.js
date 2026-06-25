@@ -4,6 +4,8 @@
 
 import Property from '../models/propertyModel.js';
 import Tenant from '../models/tenantModel.js';
+import PropertyApplication from '../models/propertyApplicationModel.js';
+import { Conversation } from '../models/messageModel.js';
 import mongoose from 'mongoose';
 
 // ── List Properties ────────────────────────────────────────────────────────────
@@ -102,7 +104,7 @@ export const updateProperty = async (propertyId, ownerId, isAdmin, updates) => {
 
   const allowed = [
     'name', 'description', 'address', 'type',
-    'yearBuilt', 'images', 'coverImage', 'status', 'totalUnits'
+    'yearBuilt', 'images', 'coverImage', 'status', 'totalUnits', 'furnishings'
   ];
   const sanitized = {};
   allowed.forEach(key => {
@@ -256,4 +258,75 @@ export const getPropertyStats = async (ownerId = null) => {
     occupancyRate: 0,
     totalMonthlyRevenue: 0
   };
+};
+
+// ── Applications (Bookings) ────────────────────────────────────────────────────
+
+export const applyForProperty = async (tenantId, propertyId, data) => {
+  const property = await Property.findById(propertyId);
+  if (!property) throw new Error('Property not found');
+  if (property.status !== 'active') throw new Error('Property is not active');
+
+  // Check if tenant already has a pending application for this property
+  const existing = await PropertyApplication.findOne({ tenantId, propertyId, status: 'pending' });
+  if (existing) throw new Error('You already have a pending application for this property');
+
+  const application = new PropertyApplication({
+    tenantId,
+    propertyId,
+    unitId: data.unitId || null,
+    unitNumber: data.unitNumber || null,
+    message: data.message || ''
+  });
+
+  await application.save();
+  return application;
+};
+
+export const getApplications = async (ownerId = null) => {
+  // If ownerId is provided, only fetch applications for properties they own
+  let propertyIds = [];
+  if (ownerId) {
+    const properties = await Property.find({ ownerId: new mongoose.Types.ObjectId(ownerId) }).select('_id');
+    propertyIds = properties.map(p => p._id);
+  }
+
+  const filter = ownerId ? { propertyId: { $in: propertyIds } } : {};
+
+  return PropertyApplication.find(filter)
+    .populate('tenantId', 'name email phone')
+    .populate('propertyId', 'name address')
+    .sort({ createdAt: -1 })
+    .lean();
+};
+
+export const updateApplicationStatus = async (applicationId, status, ownerId = null) => {
+  const application = await PropertyApplication.findById(applicationId).populate('propertyId');
+  if (!application) throw new Error('Application not found');
+
+  if (ownerId && application.propertyId.ownerId.toString() !== ownerId.toString()) {
+    throw new Error('Not authorised to update this application');
+  }
+
+  if (!['approved', 'rejected'].includes(status)) {
+    throw new Error('Invalid status');
+  }
+
+  application.status = status;
+  await application.save();
+
+  // Auto-create a Conversation when booking is approved
+  if (status === 'approved') {
+    const existingConv = await Conversation.findOne({ applicationId: application._id });
+    if (!existingConv) {
+      const ownr = application.propertyId.ownerId;
+      await Conversation.create({
+        participants: [application.tenantId, ownr],
+        propertyId: application.propertyId._id,
+        applicationId: application._id
+      });
+    }
+  }
+
+  return application;
 };

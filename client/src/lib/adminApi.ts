@@ -32,26 +32,7 @@ export interface DashboardStatsResponse {
 
 export interface UserAnalyticsResponse {
   dailyCounts: Array<{ date: string; count: number }>;
-  demographics: {
-    familyStatus: Array<{ _id: string; count: number }>;
-    ageBuckets: Array<{ _id: string; count: number }>;
-  };
-}
-
-export interface NeighborhoodAnalyticsResponse {
-  cityDistribution: Array<{ _id: string; count: number; avgRating: number }>;
-  topRated: Array<{
-    _id: string;
-    name: string;
-    city: string;
-    overallRating: number;
-    matchSuccessRate?: number;
-    sentimentScore?: number;
-  }>;
-  popularityTrend: Array<{ _id: string; avgMatch: number; avgSentiment: number }>;
-  viewTrend: Array<{ _id: string; avgViews: number; avgMatch: number }>;
-  matchSuccessDistribution: Array<{ _id: string; count: number }>;
-  comparison: Array<{ _id: string; avgMatch: number; avgSentiment: number; totalViews: number; neighborhoods: number }>;
+  roleDistribution: Array<{ _id: string; count: number }>;
 }
 
 export interface ActivityLogResponse {
@@ -116,11 +97,9 @@ export interface SystemHealthResponse {
 }
 
 export const adminApi = {
-  getDashboardStats: async (range: string) => {
-    const { data } = await api.get<DashboardStatsResponse>('/admin/dashboard-stats', {
-      params: { range }
-    });
-    return data;
+  getDashboardStats: async (range = '7d') => {
+    const res = await api.get<DashboardStatsResponse>(`/admin/dashboard-stats?range=${range}`);
+    return res.data;
   },
   getSystemHealth: async () => {
     const { data } = await api.get<SystemHealthResponse>('/admin/system-health');
@@ -130,21 +109,13 @@ export const adminApi = {
     const { data } = await api.post<{ jobId: string; status: string }>('/admin/backup');
     return data;
   },
-  getUserAnalytics: async (range: string) => {
-    const { data } = await api.get<UserAnalyticsResponse>('/admin/user-analytics', {
-      params: { range }
-    });
-    return data;
-  },
-  getNeighborhoodAnalytics: async (range: string) => {
-    const { data } = await api.get<NeighborhoodAnalyticsResponse>('/admin/neighborhood-analytics', {
-      params: { range }
-    });
-    return data;
+  getUserAnalytics: async (range = '30d') => {
+    const res = await api.get<UserAnalyticsResponse>(`/admin/user-analytics?range=${range}`);
+    return res.data;
   },
   getUsers: async () => {
-    const { data } = await api.get<AdminUser[]>('/auth/users');
-    return data;
+    const { data } = await api.get<{ users: AdminUser[]; meta: any }>('/auth/users');
+    return data.users;
   },
   toggleUserAdmin: async (userId: string, isAdmin: boolean) => {
     const { data } = await api.put<{ message: string; isAdmin: boolean }>(`/auth/users/${userId}/admin`, {

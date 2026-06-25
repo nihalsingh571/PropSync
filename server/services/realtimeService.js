@@ -83,6 +83,9 @@ const emitToUser = (userId, event, payload) => {
   }
 };
 
+export const emitChatMessage = (receiverId, payload) =>
+  emitToUser(receiverId, 'new_chat_message', payload);
+
 // ─── Admin Events ─────────────────────────────────────────────────────────────
 
 export const emitNewUserRegistered = (payload) =>

@@ -42,6 +42,7 @@ export interface Property {
   occupancyRate: number;
   occupiedUnits: number;
   vacantUnits: number;
+  furnishings?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -65,6 +66,17 @@ export interface ListPropertiesParams {
 }
 
 // ── API Calls ─────────────────────────────────────────────────────────────────
+
+export interface PropertyApplication {
+  _id: string;
+  tenantId: { _id: string; name: string; email: string; phone?: string };
+  propertyId: { _id: string; name: string; address: any };
+  unitId: string | null;
+  unitNumber: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  message: string;
+  createdAt: string;
+}
 
 export const propertyApi = {
   list: (params: ListPropertiesParams = {}) =>
@@ -95,8 +107,25 @@ export const propertyApi = {
   updateUnit: (propertyId: string, unitId: string, unitData: Partial<Unit>) =>
     api.put<{ message: string; property: Property }>(`/properties/${propertyId}/units/${unitId}`, unitData).then(r => r.data),
 
-  deleteUnit: (propertyId: string, unitId: string) =>
-    api.delete<{ message: string; property: Property }>(`/properties/${propertyId}/units/${unitId}`).then(r => r.data),
+  deleteUnit: async (propertyId: string, unitId: string) => {
+    const { data } = await api.delete<{ message: string; property: Property }>(`/properties/${propertyId}/units/${unitId}`);
+    return data;
+  },
+
+  // ── Applications ────────────────────────────────────────────────────────────
+
+  getApplications: async () => {
+    const { data } = await api.get<PropertyApplication[]>('/properties/applications');
+    return data;
+  },
+  applyForProperty: async (propertyId: string, payload: { unitId?: string; unitNumber?: string; message?: string }) => {
+    const { data } = await api.post<{ message: string; application: PropertyApplication }>(`/properties/${propertyId}/apply`, payload);
+    return data;
+  },
+  updateApplicationStatus: async (applicationId: string, status: 'approved' | 'rejected') => {
+    const { data } = await api.put<{ message: string; application: PropertyApplication }>(`/properties/applications/${applicationId}`, { status });
+    return data;
+  },
 
   // Image upload
   uploadImages: (propertyId: string, files: File[]) => {

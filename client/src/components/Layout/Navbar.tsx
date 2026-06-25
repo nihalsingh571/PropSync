@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import NotificationBell from '../Notifications/NotificationBell';
+import { useQuery } from '@tanstack/react-query';
+import { messageApi } from '../../lib/messageApi';
 import './Navbar.css';
 
 const Navbar: React.FC = () => {
@@ -9,6 +11,16 @@ const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Poll for unread messages (or wait for socket invalidation)
+  const unreadMsgQuery = useQuery({
+    queryKey: ['unread_count'],
+    queryFn: messageApi.getUnreadCount,
+    enabled: !!user,
+    staleTime: 60000
+  });
+
+  const unreadCount = unreadMsgQuery.data?.count || 0;
 
   const handleLogout = () => {
     logout();
@@ -71,16 +83,26 @@ const Navbar: React.FC = () => {
 
                 {/* Phase 4: Properties link for owner */}
                 {user.roles?.includes('property_owner') && (
-                  <Link to="/properties" className={`navbar-link ${isActive('/properties')}`} onClick={closeMenu}>
-                    Properties
-                  </Link>
+                  <>
+                    <Link to="/properties" className={`navbar-link ${isActive('/properties')}`} onClick={closeMenu}>
+                      Properties
+                    </Link>
+                    <Link to="/tenants" className={`navbar-link ${isActive('/tenants')}`} onClick={closeMenu}>
+                      Tenants
+                    </Link>
+                  </>
                 )}
 
                 {/* Phase 5: My Lease link for tenants */}
                 {user.roles?.includes('tenant') && (
-                  <Link to="/my-lease" className={`navbar-link ${isActive('/my-lease')}`} onClick={closeMenu}>
-                    My Lease
-                  </Link>
+                  <>
+                    <Link to="/available-properties" className={`navbar-link ${isActive('/available-properties')}`} onClick={closeMenu}>
+                      Browse Properties
+                    </Link>
+                    <Link to="/my-lease" className={`navbar-link ${isActive('/my-lease')}`} onClick={closeMenu}>
+                      My Lease
+                    </Link>
+                  </>
                 )}
 
 
@@ -104,6 +126,21 @@ const Navbar: React.FC = () => {
                     Bookings
                   </Link>
                 )} */}
+
+                {/* Phase 9: Messages */}
+                {(user.roles?.includes('tenant') || user.roles?.includes('property_owner')) && (
+                  <Link to="/messages" className={`navbar-link ${isActive('/messages')}`} onClick={closeMenu}>
+                    Messages
+                    {unreadCount > 0 && (
+                      <span style={{ 
+                        background: '#ef4444', color: 'white', borderRadius: '999px', 
+                        padding: '2px 6px', fontSize: '0.7rem', marginLeft: '6px', fontWeight: 'bold' 
+                      }}>
+                        {unreadCount}
+                      </span>
+                    )}
+                  </Link>
+                )}
 
                 {/* Admin portal */}
                 {user.roles?.includes('admin') && (

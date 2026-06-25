@@ -45,6 +45,11 @@
   --gray-800: #1e293b;
   --gray-900: #0f172a;
 
+  /* ── Glassmorphism ───────────────────────────────────────────────────────── */
+  --glass-bg: rgba(15, 23, 42, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: blur(16px);
+
   /* ── Typography ──────────────────────────────────────────────────────────── */
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   --font-size-xs: 0.75rem;

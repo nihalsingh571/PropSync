@@ -7,8 +7,6 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
   PieChart,
   Pie,
   Cell,
@@ -77,22 +75,15 @@ const AdminAnalytics: React.FC = () => {
     queryFn: () => adminApi.getUserAnalytics(dateRange)
   });
 
-  const neighborhoodAnalyticsQuery = useQuery({
-    queryKey: ['admin-neighborhood-analytics', dateRange],
-    queryFn: () => adminApi.getNeighborhoodAnalytics(dateRange)
-  });
-
-  const isLoading = userAnalyticsQuery.isLoading || neighborhoodAnalyticsQuery.isLoading;
-  const isRefreshing = userAnalyticsQuery.isFetching || neighborhoodAnalyticsQuery.isFetching;
+  const isLoading = userAnalyticsQuery.isLoading;
+  const isRefreshing = userAnalyticsQuery.isFetching;
 
   const userAnalytics = userAnalyticsQuery.data;
-  const neighborhoodAnalytics = neighborhoodAnalyticsQuery.data;
   const latestEvent = events[0];
 
   const handleManualRefresh = () => {
     setLastManualRefresh(new Date());
     queryClient.invalidateQueries({ queryKey: ['admin-user-analytics'] });
-    queryClient.invalidateQueries({ queryKey: ['admin-neighborhood-analytics'] });
   };
 
   return (
@@ -133,18 +124,18 @@ const AdminAnalytics: React.FC = () => {
               </ResponsiveContainer>
             </ChartCard>
 
-            <ChartCard title="Family Status Breakdown">
+            <ChartCard title="Role Distribution">
               <ResponsiveContainer width="100%" height={260}>
                 <PieChart>
                   <Pie
-                    data={userAnalytics?.demographics.familyStatus ?? []}
+                    data={userAnalytics?.roleDistribution ?? []}
                     dataKey="count"
                     nameKey="_id"
                     outerRadius={90}
                     labelLine={false}
                     label={renderPieLabel}
                   >
-                    {(userAnalytics?.demographics.familyStatus ?? []).map((_, index) => (
+                    {(userAnalytics?.roleDistribution ?? []).map((_, index) => (
                       <Cell key={index} fill={colors[index % colors.length]} />
                     ))}
                   </Pie>
@@ -152,99 +143,9 @@ const AdminAnalytics: React.FC = () => {
                     contentStyle={tooltipStyle}
                     labelStyle={tooltipLabelStyle}
                     itemStyle={{ color: '#f8fafc' }}
+                    formatter={(value, name) => [value, prettyEventName(String(name))]}
                   />
                 </PieChart>
-              </ResponsiveContainer>
-            </ChartCard>
-
-            <ChartCard title="City Distribution">
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={neighborhoodAnalytics?.cityDistribution ?? []}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
-                  <XAxis
-                    dataKey="_id"
-                    tick={axisTickStyle}
-                    axisLine={axisLineStyle}
-                    tickLine={axisLineStyle}
-                  />
-                  <YAxis
-                    tick={axisTickStyle}
-                    axisLine={axisLineStyle}
-                    tickLine={axisLineStyle}
-                  />
-                  <Tooltip
-                    contentStyle={tooltipStyle}
-                    labelStyle={tooltipLabelStyle}
-                    itemStyle={{ color: '#f8fafc' }}
-                  />
-                  <Bar dataKey="count" fill="#0ea5e9" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartCard>
-
-            <ChartCard title="Views vs Match Success">
-              <ResponsiveContainer width="100%" height={260}>
-                <LineChart data={neighborhoodAnalytics?.viewTrend ?? []}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
-                  <XAxis dataKey="_id" tick={axisTickStyle} axisLine={axisLineStyle} tickLine={axisLineStyle} />
-                  <YAxis tick={axisTickStyle} axisLine={axisLineStyle} tickLine={axisLineStyle} />
-                  <Tooltip
-                    contentStyle={tooltipStyle}
-                    labelStyle={tooltipLabelStyle}
-                    itemStyle={{ color: '#f8fafc' }}
-                  />
-                  <Line type="monotone" dataKey="avgViews" stroke="#22c55e" strokeWidth={3} dot={false} />
-                  <Line type="monotone" dataKey="avgMatch" stroke="#f97316" strokeWidth={3} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </ChartCard>
-
-            <ChartCard title="Match Success Distribution">
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={neighborhoodAnalytics?.matchSuccessDistribution ?? []}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
-                  <XAxis
-                    dataKey="_id"
-                    tick={axisTickStyle}
-                    axisLine={axisLineStyle}
-                    tickLine={axisLineStyle}
-                  />
-                  <YAxis
-                    tick={axisTickStyle}
-                    axisLine={axisLineStyle}
-                    tickLine={axisLineStyle}
-                  />
-                  <Tooltip
-                    contentStyle={tooltipStyle}
-                    labelStyle={tooltipLabelStyle}
-                    itemStyle={{ color: '#f8fafc' }}
-                  />
-                  <Bar dataKey="count" fill="#14b8a6" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartCard>
-
-            <ChartCard title="Top Performing Cities">
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart layout="vertical" data={neighborhoodAnalytics?.comparison ?? []}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
-                  <XAxis type="number" tick={axisTickStyle} axisLine={axisLineStyle} tickLine={axisLineStyle} />
-                  <YAxis
-                    dataKey="_id"
-                    type="category"
-                    width={120}
-                    tick={axisTickStyle}
-                    axisLine={axisLineStyle}
-                    tickLine={axisLineStyle}
-                  />
-                  <Tooltip
-                    contentStyle={tooltipStyle}
-                    labelStyle={tooltipLabelStyle}
-                    itemStyle={{ color: '#f8fafc' }}
-                  />
-                  <Bar dataKey="avgMatch" fill="#a855f7" barSize={20} />
-                  <Bar dataKey="avgSentiment" fill="#fbbf24" barSize={20} />
-                </BarChart>
               </ResponsiveContainer>
             </ChartCard>
           </div>

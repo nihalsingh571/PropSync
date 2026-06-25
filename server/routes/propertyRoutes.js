@@ -9,7 +9,10 @@ import {
   deleteProperty,
   addUnit,
   updateUnit,
-  deleteUnit
+  deleteUnit,
+  createApplication,
+  getApplications,
+  updateApplicationStatus
 } from '../controllers/propertyController.js';
 import { protect, admin, requireRole } from '../middleware/protect.js';
 import { uploadMultiple } from '../middleware/upload.js';
@@ -34,8 +37,31 @@ router.get(
 // GET /api/properties
 router.get(
   '/',
-  requireRole('property_owner', 'admin'),
+  requireRole('property_owner', 'admin', 'tenant'),
   listProperties
+);
+
+// ── Applications (Bookings) ───────────────────────────────────────────────────
+
+// GET /api/properties/applications
+router.get(
+  '/applications',
+  requireRole('property_owner', 'admin'),
+  getApplications
+);
+
+// POST /api/properties/:id/apply
+router.post(
+  '/:id/apply',
+  requireRole('tenant'),
+  createApplication
+);
+
+// PUT /api/properties/applications/:id
+router.put(
+  '/applications/:id',
+  requireRole('property_owner', 'admin'),
+  updateApplicationStatus
 );
 
 // POST /api/properties

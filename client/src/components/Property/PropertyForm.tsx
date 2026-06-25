@@ -24,8 +24,15 @@ const defaultValues: Partial<Property> = {
   type: 'apartment',
   yearBuilt: undefined,
   status: 'active',
-  address: { street: '', city: '', state: '', zip: '', country: 'India' }
+  address: { street: '', city: '', state: '', zip: '', country: 'India' },
+  furnishings: []
 };
+
+const AVAILABLE_FURNISHINGS = [
+  'Bed', 'Wardrobe', 'Fan', 'Geyser', 'Light', 'AC',
+  'Chimney', 'Dining Table', 'Modular Kitchen', 'Microwave', 'Fridge', 'Sofa',
+  'Stove', 'TV', 'Washing Machine', 'Water Purifier'
+];
 
 const PropertyForm: React.FC<PropertyFormProps> = ({
   initialValues,
@@ -140,6 +147,28 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
               disabled={submitting}
             />
           </div>
+        </div>
+      </section>
+
+      {/* ── Furnishing Details ────────────────────────────────────────────────── */}
+      <section className="prop-form-section">
+        <h4>Furnishing Details</h4>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem' }}>
+          {AVAILABLE_FURNISHINGS.map(item => (
+            <label key={item} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={form.furnishings?.includes(item)}
+                onChange={e => {
+                  const newFurnishings = e.target.checked
+                    ? [...(form.furnishings || []), item]
+                    : (form.furnishings || []).filter(f => f !== item);
+                  set('furnishings', newFurnishings);
+                }}
+              />
+              {item}
+            </label>
+          ))}
         </div>
       </section>
 

@@ -7,8 +7,6 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
   PieChart,
   Pie,
   Cell,
@@ -27,8 +25,6 @@ import { useAdminRealtime } from '../../contexts/AdminRealtimeContext';
 import './AdminDashboard.css';
 
 const colors = ['#4f46e5', '#22c55e', '#f97316', '#0ea5e9', '#f43f5e', '#14b8a6'];
-const axisTickStyle = { fill: '#cbd5f5', fontSize: 12 };
-const axisLineStyle = { stroke: 'rgba(148, 163, 184, 0.35)' };
 const gridStroke = 'rgba(148, 163, 184, 0.15)';
 const tooltipStyle = {
   backgroundColor: '#0f172a',
@@ -92,28 +88,16 @@ const AdminDashboard: React.FC = () => {
     queryFn: () => adminApi.getUserAnalytics(dateRange)
   });
 
-  const neighborhoodAnalyticsQuery = useQuery({
-    queryKey: ['admin-neighborhood-analytics', dateRange],
-    queryFn: () => adminApi.getNeighborhoodAnalytics(dateRange)
-  });
-
   const activityLogQuery = useQuery({
     queryKey: ['admin-activity-log'],
     queryFn: () => adminApi.getActivityLog(1, 10)
   });
 
-  const isLoading =
-    dashboardQuery.isLoading ||
-    userAnalyticsQuery.isLoading ||
-    neighborhoodAnalyticsQuery.isLoading;
-  const isRefreshing =
-    dashboardQuery.isFetching ||
-    userAnalyticsQuery.isFetching ||
-    neighborhoodAnalyticsQuery.isFetching;
+  const isLoading = dashboardQuery.isLoading || userAnalyticsQuery.isLoading;
+  const isRefreshing = dashboardQuery.isFetching || userAnalyticsQuery.isFetching;
 
   const stats = dashboardQuery.data;
   const userAnalytics = userAnalyticsQuery.data;
-  const neighborhoodAnalytics = neighborhoodAnalyticsQuery.data;
   const activityItems = stats?.recentActivity ?? activityLogQuery.data?.data ?? [];
 
   const latestEvent = events[0];
@@ -124,7 +108,6 @@ const AdminDashboard: React.FC = () => {
     setLastManualRefresh(new Date());
     queryClient.invalidateQueries({ queryKey: ['admin-dashboard'] });
     queryClient.invalidateQueries({ queryKey: ['admin-user-analytics'] });
-    queryClient.invalidateQueries({ queryKey: ['admin-neighborhood-analytics'] });
   }, [queryClient]);
 
   return (
@@ -192,36 +175,11 @@ const AdminDashboard: React.FC = () => {
               </ResponsiveContainer>
             </ChartCard>
 
-            <ChartCard title="City Distribution">
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={neighborhoodAnalytics?.cityDistribution ?? []}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
-                  <XAxis
-                    dataKey="_id"
-                    tick={axisTickStyle}
-                    axisLine={axisLineStyle}
-                    tickLine={axisLineStyle}
-                  />
-                  <YAxis
-                    tick={axisTickStyle}
-                    axisLine={axisLineStyle}
-                    tickLine={axisLineStyle}
-                  />
-                  <Tooltip
-                    contentStyle={tooltipStyle}
-                    labelStyle={tooltipLabelStyle}
-                    itemStyle={{ color: '#f8fafc' }}
-                  />
-                  <Bar dataKey="count" radius={[8, 8, 0, 0]} fill="#14b8a6" />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartCard>
-
-            <ChartCard title="Family Status">
+            <ChartCard title="Role Distribution">
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
                   <Pie
-                    data={userAnalytics?.demographics.familyStatus ?? []}
+                    data={userAnalytics?.roleDistribution ?? []}
                     dataKey="count"
                     nameKey="_id"
                     innerRadius={40}
@@ -229,7 +187,7 @@ const AdminDashboard: React.FC = () => {
                     labelLine={false}
                     label={renderPieLabel}
                   >
-                    {(userAnalytics?.demographics.familyStatus ?? []).map((_, index) => (
+                    {(userAnalytics?.roleDistribution ?? []).map((_, index) => (
                       <Cell key={index} fill={colors[index % colors.length]} />
                     ))}
                   </Pie>
@@ -237,102 +195,14 @@ const AdminDashboard: React.FC = () => {
                     contentStyle={tooltipStyle}
                     labelStyle={tooltipLabelStyle}
                     itemStyle={{ color: '#f8fafc' }}
+                    formatter={(value, name) => [value, prettyEventName(String(name))]}
                   />
                 </PieChart>
-              </ResponsiveContainer>
-            </ChartCard>
-
-            <ChartCard title="Views vs Match Success">
-              <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={neighborhoodAnalytics?.viewTrend ?? []}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
-                  <XAxis dataKey="_id" tick={axisTickStyle} axisLine={axisLineStyle} tickLine={axisLineStyle} />
-                  <YAxis tick={axisTickStyle} axisLine={axisLineStyle} tickLine={axisLineStyle} />
-                  <Tooltip
-                    contentStyle={tooltipStyle}
-                    labelStyle={tooltipLabelStyle}
-                    itemStyle={{ color: '#f8fafc' }}
-                  />
-                  <Line type="monotone" dataKey="avgViews" stroke="#22c55e" strokeWidth={3} dot={false} />
-                  <Line type="monotone" dataKey="avgMatch" stroke="#f97316" strokeWidth={3} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </ChartCard>
-
-            <ChartCard title="Match Success Distribution">
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={neighborhoodAnalytics?.matchSuccessDistribution ?? []}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
-                  <XAxis
-                    dataKey="_id"
-                    tick={axisTickStyle}
-                    axisLine={axisLineStyle}
-                    tickLine={axisLineStyle}
-                  />
-                  <YAxis
-                    tick={axisTickStyle}
-                    axisLine={axisLineStyle}
-                    tickLine={axisLineStyle}
-                  />
-                  <Tooltip
-                    contentStyle={tooltipStyle}
-                    labelStyle={tooltipLabelStyle}
-                    itemStyle={{ color: '#f8fafc' }}
-                  />
-                  <Bar dataKey="count" fill="#0ea5e9" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartCard>
-
-            <ChartCard title="Top Performing Cities">
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart layout="vertical" data={neighborhoodAnalytics?.comparison ?? []}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
-                  <XAxis type="number" tick={axisTickStyle} axisLine={axisLineStyle} tickLine={axisLineStyle} />
-                  <YAxis
-                    dataKey="_id"
-                    type="category"
-                    width={120}
-                    tick={axisTickStyle}
-                    axisLine={axisLineStyle}
-                    tickLine={axisLineStyle}
-                  />
-                  <Tooltip
-                    contentStyle={tooltipStyle}
-                    labelStyle={tooltipLabelStyle}
-                    itemStyle={{ color: '#f8fafc' }}
-                  />
-                  <Bar dataKey="avgMatch" fill="#a855f7" barSize={20} />
-                  <Bar dataKey="avgSentiment" fill="#fbbf24" barSize={20} />
-                </BarChart>
               </ResponsiveContainer>
             </ChartCard>
           </div>
 
           <div className="admin-panels">
-            <div className="admin-panel">
-              <h3>Top Rated Neighborhoods</h3>
-              <table className="admin-top-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>City</th>
-                    <th>Rating</th>
-                    <th>Match Rate</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(neighborhoodAnalytics?.topRated ?? []).map((n) => (
-                    <tr key={n._id}>
-                      <td>{n.name}</td>
-                      <td>{n.city}</td>
-                      <td>{n.overallRating?.toFixed(1)}</td>
-                      <td>{n.matchSuccessRate ? `${n.matchSuccessRate}%` : '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
             <div className="admin-panel-columns">
               <ActivityFeed items={activityItems} />
               <ActivityMonitor events={events} />

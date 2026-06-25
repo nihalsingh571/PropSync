@@ -7,6 +7,8 @@ interface PropertyCardProps {
   property: Property;
   onDelete?: (id: string) => void;
   showActions?: boolean;
+  onClick?: () => void;
+  customActions?: React.ReactNode;
 }
 
 const statusConfig = {
@@ -23,13 +25,13 @@ const typeIcons: Record<string, string> = {
   independent_house: '🏘️'
 };
 
-const PropertyCard: React.FC<PropertyCardProps> = ({ property, onDelete, showActions = true }) => {
+const PropertyCard: React.FC<PropertyCardProps> = ({ property, onDelete, showActions = true, onClick, customActions }) => {
   const statusInfo = statusConfig[property.status] ?? statusConfig.active;
   const icon = typeIcons[property.type] ?? '🏠';
   const ownerName = typeof property.ownerId === 'object' ? property.ownerId.name : null;
 
   return (
-    <div className="property-card">
+    <div className="property-card" onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
       {/* ── Header ──────────────────────────────────────────────────────────── */}
       <div className="property-card__header">
         <div className="property-card__icon">{icon}</div>
@@ -79,22 +81,27 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onDelete, showAct
       </div>
 
       {/* ── Actions ─────────────────────────────────────────────────────────── */}
-      {showActions && (
+      {showActions && !customActions && (
         <div className="property-card__actions">
-          <Link to={`/properties/${property._id}`} className="btn-prop btn-prop--primary">
+          <Link to={`/properties/${property._id}`} className="btn-prop btn-prop--primary" onClick={e => e.stopPropagation()}>
             View Details
           </Link>
-          <Link to={`/properties/${property._id}/edit`} className="btn-prop btn-prop--secondary">
+          <Link to={`/properties/${property._id}/edit`} className="btn-prop btn-prop--secondary" onClick={e => e.stopPropagation()}>
             Edit
           </Link>
           {onDelete && (
             <button
               className="btn-prop btn-prop--danger"
-              onClick={() => onDelete(property._id)}
+              onClick={e => { e.stopPropagation(); onDelete(property._id); }}
             >
               Delete
             </button>
           )}
+        </div>
+      )}
+      {customActions && (
+        <div className="property-card__actions" onClick={e => e.stopPropagation()}>
+          {customActions}
         </div>
       )}
     </div>
