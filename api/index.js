@@ -1,21 +1,20 @@
-import app from '../server/server.js';
+import dotenv from 'dotenv';
 import connectDB from '../server/config/database.js';
+import createApp from '../server/app.js';
 
-// Cache the database connection
+dotenv.config();
+
+// Cache the database connection across warm Vercel invocations
 let isConnected = false;
 
-// Disable Vercel's default body parser so Express can process the raw stream
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+// Create the Express app with open CORS (Vercel handles domain security)
+const app = createApp({ allowedOrigins: [] });
 
 export default async function handler(req, res) {
-    if (!isConnected) {
-        await connectDB();
-        isConnected = true;
-    }
+  if (!isConnected) {
+    await connectDB();
+    isConnected = true;
+  }
 
-    return app(req, res);
+  return app(req, res);
 }
