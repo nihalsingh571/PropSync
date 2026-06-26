@@ -16,7 +16,10 @@ const PORT = process.env.PORT || 8000;
 
 // Only listen if running directly (not imported as a module for Vercel/Render)
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-  connectDB();
+  connectDB().catch(err => {
+    console.error('Failed to connect to DB on startup:', err);
+    process.exit(1);
+  });
   app.listen(PORT, () => {
     console.log(`🚀 PropSync Server running on port ${PORT}`);
     console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
