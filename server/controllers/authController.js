@@ -56,7 +56,12 @@ export const sendRegisterOTP = async (req, res) => {
     // Send email
     await sendVerificationOTPEmail(emailClean, otp);
 
-    return res.status(200).json({ message: 'Verification code sent to your email' });
+    const devOtp = process.env.SENDGRID_API_KEY ? null : otp;
+
+    return res.status(200).json({
+      message: 'Verification code sent to your email',
+      otp: devOtp
+    });
   } catch (error) {
     console.error('Send register OTP error:', error);
     return res.status(500).json({ message: 'Failed to send verification code', error: error.message });

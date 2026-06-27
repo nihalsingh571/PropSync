@@ -61,7 +61,7 @@ interface AuthContextType {
   token: string | null;
   login: (email: string, password: string) => Promise<{ require2FA?: boolean; tempToken?: string } | void>;
   verify2FA: (code: string, tempToken: string) => Promise<void>;
-  sendRegisterOTP: (email: string) => Promise<void>;
+  sendRegisterOTP: (email: string) => Promise<string | void>;
   register: (payload: RegisterPayload) => Promise<void>;
   logout: () => void;
   updateUser: (updates: Partial<User>) => void;
@@ -160,9 +160,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // ── Send Register OTP ────────────────────────────────────────────────────────
-  const sendRegisterOTP = async (email: string): Promise<void> => {
+  const sendRegisterOTP = async (email: string): Promise<string | void> => {
     try {
-      await api.post('/auth/send-register-otp', { email });
+      const { data } = await api.post('/auth/send-register-otp', { email });
+      if (data.otp) {
+        return data.otp;
+      }
     } catch (error: any) {
       const msg = error.response?.data?.message ?? 'Failed to send verification code.';
       throw new Error(msg);

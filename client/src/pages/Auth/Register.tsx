@@ -69,8 +69,13 @@ const Register: React.FC = () => {
     setError('');
     setLoading(true);
     try {
-      await sendRegisterOTP(formData.email.trim());
-      showToast('Verification code sent to your email', 'success');
+      const devOtp = await sendRegisterOTP(formData.email.trim());
+      if (devOtp) {
+        showToast(`[Demo Mode] Verification code is: ${devOtp}`, 'info');
+        setOtpCode(devOtp);
+      } else {
+        showToast('Verification code sent to your email', 'success');
+      }
       setStep(3);
     } catch (err: any) {
       setError(err.message);
