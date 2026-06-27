@@ -176,12 +176,12 @@ npm run seed --workspace server
 
 ## 👤 Default Roles
 
-| Role | Access |
+| Role | Access & Capabilities |
 |---|---|
-| `admin` | Full system access, user management, analytics |
-| `property_owner` | Own properties, tenants, maintenance, amenities |
-| `tenant` | Own lease, maintenance requests, amenity bookings |
-| `maintenance_staff` | Assigned maintenance requests |
+| `admin` | **System Administrator**: Full system oversight, User Management (promote/demote/suspend), Admin Audit Activity logs, real-time KPI monitoring (Recharts charts, user growth, role distributions), global system health metrics, and Google Authenticator (2FA) security configuration. |
+| `property_owner` | **Property Owner / Manager**: Register new properties (details, units indexing, Unsplash uploads), onboard and invite tenants to specific units, view and filter active tenants roster, track maintenance requests queue for their properties, and configure shared amenities. |
+| `tenant` | **Tenant / Resident**: View active lease details (units, dates), create and track maintenance requests (with priority levels and attachment support), view available shared amenities schedule, and submit slot bookings on the timeline calendar. |
+| `maintenance_staff` | **Maintenance Technician**: View assigned maintenance jobs queue, detail timelines, and update task status (`Open` $\rightarrow$ `In Progress` $\rightarrow$ `Resolved`) with status logs. |
 
 New accounts default to `tenant`. An admin must upgrade roles via the Admin → Users panel.
 
