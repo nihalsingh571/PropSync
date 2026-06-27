@@ -430,12 +430,20 @@ const BookingForm: React.FC<{
   onSubmit: (data: any) => void;
   submitting: boolean;
 }> = ({ amenity, onSubmit, submitting }) => {
+  const { user } = useAuth();
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
   const [date, setDate] = useState(todayStr);
   const [startHour, setStartHour] = useState('09:00');
   const [duration, setDuration] = useState(amenity.bookingDurationMin);
   const [notes, setNotes] = useState('');
+
+  // Fetch all bookings for this amenity
+  const { data: bookingsData, isLoading: isLoadingBookings } = useQuery({
+    queryKey: ['amenity-bookings', amenity._id],
+    queryFn: () => amenityApi.listBookings(amenity._id, { limit: 100 }),
+    staleTime: 10_000
+  });
 
   const startTime = new Date(`${date}T${startHour}:00`);
   const endTime = new Date(startTime.getTime() + duration * 60000);
@@ -445,44 +453,126 @@ const BookingForm: React.FC<{
     return `${h}:00`;
   });
 
+  // Check if a slot (hourly) overlaps with any booking
+  const getSlotStatus = (hourStr: string) => {
+    const slotStart = new Date(`${date}T${hourStr}:00`);
+    const slotEnd = new Date(slotStart.getTime() + 60 * 60000); // 1 hour slot
+    
+    if (isLoadingBookings) return { type: 'loading' };
+
+    const booking = bookingsData?.bookings?.find((b: any) => {
+      if (b.status === 'cancelled') return false;
+      const start = new Date(b.startTime);
+      const end = new Date(b.endTime);
+      return start < slotEnd && end > slotStart;
+    });
+
+    if (booking) {
+      const tenant = typeof booking.tenantId === 'object' ? booking.tenantId : null;
+      const isMyBooking = booking.tenantId?._id?.toString() === user?._id?.toString() || 
+                          booking.tenantId?.toString() === user?._id?.toString();
+      return {
+        type: 'booked',
+        isMyBooking,
+        label: isMyBooking ? 'Your Booking' : (tenant?.name || 'Reserved'),
+        status: booking.status
+      };
+    }
+
+    return { type: 'free' };
+  };
+
   return (
-    <div className="property-form">
-      <div style={{ background: 'rgba(79,70,229,0.08)', border: '1px solid rgba(79,70,229,0.2)', borderRadius: 10, padding: '0.75rem 1rem', marginBottom: '1rem', fontSize: '0.82rem', color: '#94a3b8' }}>
+    <div className="property-form select-slot-container">
+      <div style={{ background: 'rgba(79,70,229,0.08)', border: '1px solid rgba(79,70,229,0.2)', borderRadius: 10, padding: '0.75rem 1rem', marginBottom: '1.25rem', fontSize: '0.82rem', color: '#94a3b8' }}>
         <strong style={{ color: '#818cf8' }}>ℹ️ Rules:</strong> {amenity.capacity} person capacity · {amenity.bookingDurationMin}–{amenity.bookingDurationMax}m slots
         {amenity.requiresApproval && <span style={{ color: '#f59e0b', marginLeft: '0.5rem' }}>· Requires approval</span>}
       </div>
-      <div className="prop-form-grid">
-        <div className="form-group">
-          <label className="form-label">Date *</label>
-          <input type="date" className="form-input" value={date} min={todayStr}
-            onChange={e => setDate(e.target.value)} disabled={submitting} />
-        </div>
-        <div className="form-group">
-          <label className="form-label">Start Time *</label>
-          <select className="form-input" value={startHour} onChange={e => setStartHour(e.target.value)} disabled={submitting}>
-            {hours.map(h => <option key={h} value={h}>{h}</option>)}
-          </select>
-        </div>
-        <div className="form-group">
-          <label className="form-label">Duration (minutes)</label>
-          <select className="form-input" value={duration} onChange={e => setDuration(Number(e.target.value))} disabled={submitting}>
-            {Array.from({ length: Math.floor((amenity.bookingDurationMax - amenity.bookingDurationMin) / 30) + 1 }, (_, i) => {
-              const mins = amenity.bookingDurationMin + i * 30;
-              return <option key={mins} value={mins}>{mins} min</option>;
+
+      <div className="booking-modal-layout" style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem' }}>
+        {/* Left Column: Visual Daily Timeline */}
+        <div className="daily-timeline-column" style={{ flex: '1 1 300px', minWidth: '280px' }}>
+          <h4 style={{ marginBottom: '0.75rem', fontSize: '0.9rem', color: '#f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>📅 Day Schedule</span>
+            <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>({new Date(date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })})</span>
+          </h4>
+          
+          <div className="timeline-slots-grid" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '320px', overflowY: 'auto', paddingRight: '0.5rem', border: '1px solid #334155', borderRadius: '8px', padding: '0.5rem', background: '#0f172a' }}>
+            {hours.map(h => {
+              const status = getSlotStatus(h);
+              const isSelected = startHour === h;
+
+              if (status.type === 'loading') {
+                return <div key={h} className="timeline-slot timeline-slot--loading" style={{ height: '38px', background: 'rgba(255,255,255,0.03)', borderRadius: '6px' }} />;
+              }
+
+              if (status.type === 'booked') {
+                const bg = status.isMyBooking ? 'rgba(79, 70, 229, 0.2)' : 'rgba(239, 68, 68, 0.15)';
+                const border = status.isMyBooking ? '1px solid rgba(79, 70, 229, 0.4)' : '1px solid rgba(239, 68, 68, 0.3)';
+                const color = status.isMyBooking ? '#818cf8' : '#ef4444';
+                return (
+                  <div key={h} className="timeline-slot timeline-slot--booked" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.45rem 0.75rem', background: bg, border: border, borderRadius: '6px', fontSize: '0.8rem', color: color }}>
+                    <strong>{h}</strong>
+                    <span>{status.label} ({status.status === 'pending_approval' ? 'Pending' : 'Confirmed'})</span>
+                  </div>
+                );
+              }
+
+              // Available slot
+              const bg = isSelected ? 'rgba(16, 185, 129, 0.2)' : 'transparent';
+              const border = isSelected ? '1px solid #10b981' : '1px solid rgba(255,255,255,0.08)';
+              const color = isSelected ? '#10b981' : '#94a3b8';
+              return (
+                <button
+                  type="button"
+                  key={h}
+                  className={`timeline-slot timeline-slot--free ${isSelected ? 'selected' : ''}`}
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.45rem 0.75rem', background: bg, border: border, borderRadius: '6px', fontSize: '0.8rem', color: color, cursor: 'pointer', transition: 'all 0.15s ease', textAlign: 'left' }}
+                  onClick={() => setStartHour(h)}
+                >
+                  <strong>{h}</strong>
+                  <span>Available {isSelected && '✓'}</span>
+                </button>
+              );
             })}
-          </select>
+          </div>
         </div>
-        <div className="form-group">
-          <label className="form-label">End Time</label>
-          <input className="form-input" value={endTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} readOnly disabled />
-        </div>
-        <div className="form-group form-group--full">
-          <label className="form-label">Notes (optional)</label>
-          <textarea className="form-input form-textarea" value={notes} onChange={e => setNotes(e.target.value)} rows={2} disabled={submitting} />
+
+        {/* Right Column: Booking Inputs */}
+        <div className="booking-inputs-column" style={{ flex: '1 1 250px', minWidth: '240px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="form-group">
+            <label className="form-label">Date *</label>
+            <input type="date" className="form-input" value={date} min={todayStr}
+              onChange={e => setDate(e.target.value)} disabled={submitting} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Start Time *</label>
+            <select className="form-input" value={startHour} onChange={e => setStartHour(e.target.value)} disabled={submitting}>
+              {hours.map(h => <option key={h} value={h}>{h}</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Duration (minutes)</label>
+            <select className="form-input" value={duration} onChange={e => setDuration(Number(e.target.value))} disabled={submitting}>
+              {Array.from({ length: Math.floor((amenity.bookingDurationMax - amenity.bookingDurationMin) / 30) + 1 }, (_, i) => {
+                const mins = amenity.bookingDurationMin + i * 30;
+                return <option key={mins} value={mins}>{mins} min</option>;
+              })}
+            </select>
+          </div>
+          <div className="form-group">
+            <label className="form-label">End Time</label>
+            <input className="form-input" value={endTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} readOnly disabled />
+          </div>
+          <div className="form-group form-group--full">
+            <label className="form-label">Notes (optional)</label>
+            <textarea className="form-input form-textarea" value={notes} onChange={e => setNotes(e.target.value)} rows={2} disabled={submitting} placeholder="Provide any additional info..." />
+          </div>
         </div>
       </div>
-      <div className="prop-form-footer">
-        <button type="button" className="btn btn-primary" disabled={submitting || !date}
+
+      <div className="prop-form-footer" style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        <button type="button" className="btn btn-primary" style={{ width: '100%' }} disabled={submitting || !date}
           onClick={() => onSubmit({ startTime: startTime.toISOString(), endTime: endTime.toISOString(), notes })}>
           {submitting ? <><span className="btn-spinner" />Booking…</> : amenity.requiresApproval ? 'Request Booking' : 'Confirm Booking'}
         </button>
@@ -507,6 +597,13 @@ const amenityStyles = `
 .amenity-card__actions { display: flex; gap: .4rem; margin-top: .4rem; flex-wrap: wrap; }
 .btn-secondary { background: rgba(255,255,255,.05); color: #94a3b8; border: 1px solid #334155; padding: .5rem 1rem; border-radius: 8px; font-size: .85rem; font-weight: 600; cursor: pointer; transition: background .15s; }
 .btn-secondary:hover { background: rgba(255,255,255,.09); }
+
+.timeline-slots-grid::-webkit-scrollbar { width: 6px; }
+.timeline-slots-grid::-webkit-scrollbar-track { background: transparent; }
+.timeline-slots-grid::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+.timeline-slots-grid::-webkit-scrollbar-thumb:hover { background: #475569; }
+.timeline-slot:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+.timeline-slot--free:hover { border-color: #10b981 !important; color: #10b981 !important; background: rgba(16, 185, 129, 0.05) !important; }
 `;
 
 export default Amenities;

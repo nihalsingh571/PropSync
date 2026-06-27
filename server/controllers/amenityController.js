@@ -107,10 +107,27 @@ export const listBookings = async (req, res) => {
     const scope = await ownerScope(req.user);
     const result = await amenityService.listBookings({
       amenityId: req.params.id,
-      tenantId: isTenant(req.user) && !isAdmin(req.user) ? req.user._id.toString() : null,
-      status, page: page || 1, limit: limit || 20,
+      tenantId: null, // Allow seeing all bookings so availability is visible on calendar
+      status, page: page || 1, limit: limit || 100, // retrieve more bookings for calendar
       ownerId: scope.ownerId || null
     });
+
+    // Sanitize other tenants' personal info for privacy if requester is a tenant
+    if (isTenant(req.user) && !isAdmin(req.user) && !isOwner(req.user)) {
+      result.bookings = result.bookings.map(b => {
+        const isMyBooking = b.tenantId?._id?.toString() === req.user._id.toString() ||
+                            b.tenantId?.toString() === req.user._id.toString();
+        if (!isMyBooking) {
+          return {
+            ...b,
+            tenantId: { name: 'Reserved' },
+            notes: ''
+          };
+        }
+        return b;
+      });
+    }
+
     return res.json(result);
   } catch (e) { return res.status(500).json({ message: e.message }); }
 };
