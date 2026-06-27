@@ -4,6 +4,29 @@
 
 [![GitHub](https://img.shields.io/badge/GitHub-nihalsingh571%2FPropSync-blue?logo=github)](https://github.com/nihalsingh571/PropSync)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Live Demo](https://img.shields.io/badge/Demo-prop--sync.vercel.app-purple?logo=vercel)](https://prop-sync.vercel.app/)
+
+---
+
+## 🌐 Live Demo
+
+You can access the live application here: **[https://prop-sync.vercel.app/](https://prop-sync.vercel.app/)**
+
+---
+
+## 📸 Screenshots
+
+| Landing Page | Login Screen |
+|:---:|:---:|
+| ![Landing Page](./screenshots/landing_page.png) | ![Login Screen](./screenshots/login_page.png) |
+
+| Admin Dashboard | Owner Dashboard |
+|:---:|:---:|
+| ![Admin Dashboard](./screenshots/admin_dashboard.png) | ![Owner Dashboard](./screenshots/owner_dashboard.png) |
+
+| Properties Listing |
+|:---:|
+| ![Properties Listing](./screenshots/properties_list.png) |
 
 ---
 
