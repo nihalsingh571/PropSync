@@ -10,23 +10,29 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const UPLOADS_DIR = path.join(__dirname, '..', 'uploads');
 
+const isVercel = !!process.env.VERCEL;
+
 // Ensure uploads directory exists (fails gracefully on read-only serverless filesystems)
-try {
-  if (!fs.existsSync(UPLOADS_DIR)) {
-    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+if (!isVercel) {
+  try {
+    if (!fs.existsSync(UPLOADS_DIR)) {
+      fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+    }
+  } catch (err) {
+    console.warn('Warning: Could not create uploads directory (read-only filesystem):', err.message);
   }
-} catch (err) {
-  console.warn('Warning: Could not create uploads directory (read-only filesystem):', err.message);
 }
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const unique = `${Date.now()}-${Math.round(Math.random() * 1e6)}${ext}`;
-    cb(null, unique);
-  }
-});
+const storage = isVercel
+  ? multer.memoryStorage()
+  : multer.diskStorage({
+      destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
+      filename: (_req, file, cb) => {
+        const ext = path.extname(file.originalname).toLowerCase();
+        const unique = `${Date.now()}-${Math.round(Math.random() * 1e6)}${ext}`;
+        cb(null, unique);
+      }
+    });
 
 const fileFilter = (_req, file, cb) => {
   const allowed = /jpeg|jpg|png|gif|webp/;

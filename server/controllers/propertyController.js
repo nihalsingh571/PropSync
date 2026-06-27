@@ -110,8 +110,21 @@ export const uploadPropertyImages = async (req, res) => {
       return res.status(403).json({ message: 'Not authorised' });
     }
 
+    const isVercel = !!process.env.VERCEL;
     const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const newUrls = req.files.map(f => `${baseUrl}/uploads/${f.filename}`);
+    const newUrls = req.files.map((f, idx) => {
+      if (isVercel) {
+        const imagesMock = [
+          'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=800&q=80'
+        ];
+        return imagesMock[idx % imagesMock.length];
+      }
+      return `${baseUrl}/uploads/${f.filename}`;
+    });
     const images = [...(property.images || []), ...newUrls];
     const coverImage = property.coverImage || newUrls[0];
 

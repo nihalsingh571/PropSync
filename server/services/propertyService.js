@@ -86,10 +86,23 @@ export const getPropertyById = async (propertyId) => {
 
 // ── Create Property ────────────────────────────────────────────────────────────
 export const createProperty = async (ownerId, data) => {
+  const units = data.units && data.units.length > 0
+    ? data.units
+    : [{
+        unitNumber: 'Main Unit',
+        floor: 1,
+        bedrooms: 1,
+        bathrooms: 1,
+        monthlyRent: 15000,
+        depositAmount: 30000,
+        status: 'vacant'
+      }];
+
   const property = await Property.create({
     ...data,
+    units,
     ownerId,
-    totalUnits: data.units?.length ?? 1
+    totalUnits: units.length
   });
 
   return property.toObject();

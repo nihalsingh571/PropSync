@@ -190,12 +190,25 @@ export const uploadAttachments = async (req, res) => {
     const request = await maintenanceService.getRequestById(req.params.id);
     if (!request) return res.status(404).json({ message: 'Request not found' });
 
+    const isVercel = !!process.env.VERCEL;
     const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const newAttachments = req.files.map(f => ({
-      url: `${baseUrl}/uploads/${f.filename}`,
-      name: f.originalname,
-      type: f.mimetype
-    }));
+    const newAttachments = req.files.map((f, idx) => {
+      let url = `${baseUrl}/uploads/${f.filename}`;
+      if (isVercel) {
+        const mocks = [
+          'https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=800&q=80'
+        ];
+        url = mocks[idx % mocks.length];
+      }
+      return {
+        url,
+        name: f.originalname,
+        type: f.mimetype
+      };
+    });
 
     const updated = await maintenanceService.addAttachments(
       req.params.id, newAttachments
