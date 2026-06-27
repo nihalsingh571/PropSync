@@ -20,13 +20,17 @@ You can access the live application here: **[https://prop-sync.vercel.app/](http
 |:---:|:---:|
 | ![Landing Page](./screenshots/landing_page.png) | ![Login Screen](./screenshots/login_page.png) |
 
-| Admin Dashboard | Owner Dashboard |
+| Owner Dashboard | Admin Dashboard |
 |:---:|:---:|
-| ![Admin Dashboard](./screenshots/admin_dashboard.png) | ![Owner Dashboard](./screenshots/owner_dashboard.png) |
+| ![Owner Dashboard](./screenshots/owner_dashboard.png) | ![Admin Dashboard](./screenshots/admin_dashboard.png) |
 
-| Properties Listing |
+| Properties Listing | Amenities Booking |
+|:---:|:---:|
+| ![Properties Listing](./screenshots/properties_list.png) | ![Amenities Booking](./screenshots/amenities.png) |
+
+| Maintenance Workflow |
 |:---:|
-| ![Properties Listing](./screenshots/properties_list.png) |
+| ![Maintenance Workflow](./screenshots/maintainence_workflow.png) |
 
 ---
 
@@ -34,14 +38,15 @@ You can access the live application here: **[https://prop-sync.vercel.app/](http
 
 | Domain | Highlights |
 |---|---|
-| **Authentication & RBAC** | JWT auth, role-based access (Admin · Property Owner · Tenant · Maintenance Staff), password reset |
-| **Property Management** | CRUD for properties, image support, status tracking |
-| **Tenant Management** | Lease lifecycle (active → notice → vacated), document storage, lease expiry alerts |
-| **Maintenance Requests** | Full state machine (Open → Assigned → In Progress → Pending Review → Resolved), staff assignment, feedback & rating |
-| **Amenity Management** | Booking system with conflict detection, capacity limits, approval workflows, booking stats |
-| **Notification System** | In-app notification bell, read/unread management, TTL auto-purge (90 days), event-driven triggers |
-| **Role Dashboards** | Personalised dashboards for every role (Tenant, Owner, Staff, Admin) |
-| **Admin Panel** | Full analytics with Recharts, user management, live activity feed via Socket.IO |
+| **Authentication & Security** | Secure JWT authentication, password hashing with bcrypt, role-based access (Admin · Property Owner · Tenant · Maintenance Staff) |
+| **Google Authenticator (2FA)** | Advanced 2FA security settings for Admin profile logins featuring dynamic QR Code generation and 6-digit TOTP validation |
+| **Pre-Registration Email OTP** | Pre-registration email validation via SendGrid (with a smart demo-mode fallback) to verify email addresses before creating accounts |
+| **Property Management** | Full property CRUD operations, dynamic units indexing, status tracking, and image storage configurations |
+| **Tenant Management** | Leases lifecycle tracking (active · notice · vacated), lease expiry alerts, and tenant rosters |
+| **Maintenance Workflows** | Structured state machine (`Open` $\rightarrow$ `In Progress` $\rightarrow$ `Resolved`), staff assignment, issue descriptions, and attachment support (optimized for Vercel memory storage) |
+| **Amenity Booking Calendar** | Visual timeline bookings, check-in and check-out tracking, and robust conflict prevention logic to avoid double bookings |
+| **Notifications & Real-time** | Live in-app notification alerts, unread counts, and real-time status updates powered by event-driven Socket.IO |
+| **KPIs & Dashboards** | Interactive dashboards customized per-role featuring charts, live user analytics, and system metrics using Recharts |
 
 ---
 
