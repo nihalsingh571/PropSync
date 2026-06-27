@@ -1,8 +1,10 @@
 // server/controllers/authController.js — PropSync v2
 import User from '../models/userModel.js';
 import jwt from 'jsonwebtoken';
-import { authenticator } from 'otplib';
+import otplib from 'otplib';
 import QRCode from 'qrcode';
+
+const { authenticator } = otplib;
 
 // ── Valid roles for self-registration ─────────────────────────────────────────
 // Admins are created by the seed script or by existing admins only
