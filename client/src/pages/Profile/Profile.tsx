@@ -36,7 +36,7 @@ interface UserPreferences {
 }
 
 const Profile: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(false);
   const { showToast } = useToast();
@@ -48,6 +48,14 @@ const Profile: React.FC = () => {
   });
   
   const [preferences, setPreferences] = useState<UserPreferences | null>(null);
+
+  // ── Two-Factor Authentication States ──
+  const [setup2FAData, setSetup2FAData] = useState<{ secret: string; qrCodeDataUrl: string } | null>(null);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [disablePassword, setDisablePassword] = useState('');
+  const [showSetup, setShowSetup] = useState(false);
+  const [showDisable, setShowDisable] = useState(false);
+  const [mfaLoading, setMfaLoading] = useState(false);
   const [stats, setStats] = useState({
     totalMatches: 0,
     profileViews: 0,
@@ -147,6 +155,53 @@ const Profile: React.FC = () => {
       showToast(msg, 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ── Two-Factor Authentication Handlers ──
+  const handleSetup2FA = async () => {
+    setMfaLoading(true);
+    try {
+      const { data } = await api.post('/auth/setup-2fa');
+      setSetup2FAData(data);
+      setShowSetup(true);
+    } catch (err: any) {
+      showToast(err.response?.data?.message || 'Failed to start 2FA setup', 'error');
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
+  const handleEnable2FA = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMfaLoading(true);
+    try {
+      await api.post('/auth/enable-2fa', { code: verificationCode });
+      showToast('Google Authenticator enabled successfully!', 'success');
+      updateUser({ twoFactorEnabled: true });
+      setShowSetup(false);
+      setSetup2FAData(null);
+      setVerificationCode('');
+    } catch (err: any) {
+      showToast(err.response?.data?.message || 'Invalid verification code', 'error');
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
+  const handleDisable2FA = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMfaLoading(true);
+    try {
+      await api.post('/auth/disable-2fa', { password: disablePassword });
+      showToast('Google Authenticator disabled successfully!', 'success');
+      updateUser({ twoFactorEnabled: false });
+      setShowDisable(false);
+      setDisablePassword('');
+    } catch (err: any) {
+      showToast(err.response?.data?.message || 'Invalid password', 'error');
+    } finally {
+      setMfaLoading(false);
     }
   };
 
@@ -452,6 +507,102 @@ const Profile: React.FC = () => {
                     {loading ? 'Changing...' : 'Change Password'}
                   </button>
                 </form>
+              </div>
+
+              {/* Google Authenticator (2FA) Section */}
+              <div className="content-section" style={{ marginTop: '2rem' }}>
+                <h2>Two-Factor Authentication (2FA)</h2>
+                <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '1.25rem' }}>
+                  Protect your account with Google Authenticator. You'll need to enter a 6-digit verification code from the app whenever you log in.
+                </p>
+
+                {user?.twoFactorEnabled ? (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                      <span style={{ fontSize: '1.25rem', color: '#10b981' }}>🛡️</span>
+                      <div>
+                        <strong style={{ display: 'block', color: '#f1f5f9' }}>Google Authenticator is Active</strong>
+                        <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Your account is protected by two-factor authentication</span>
+                      </div>
+                    </div>
+
+                    {showDisable ? (
+                      <form onSubmit={handleDisable2FA} className="password-form" style={{ background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)', padding: '1.25rem', borderRadius: '12px' }}>
+                        <div className="form-group">
+                          <label className="form-label" style={{ color: '#ef4444' }}>Enter Password to Confirm</label>
+                          <input
+                            type="password"
+                            value={disablePassword}
+                            onChange={(e) => setDisablePassword(e.target.value)}
+                            className="form-input"
+                            required
+                            placeholder="Enter your password"
+                            disabled={mfaLoading}
+                          />
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
+                          <button type="submit" className="btn btn-danger" disabled={mfaLoading}>
+                            {mfaLoading ? 'Disabling...' : 'Confirm Disable'}
+                          </button>
+                          <button type="button" className="btn btn-outline" style={{ borderColor: 'rgba(255,255,255,0.1)', color: '#cbd5e1' }} onClick={() => { setShowDisable(false); setDisablePassword(''); }}>
+                            Cancel
+                          </button>
+                        </div>
+                      </form>
+                    ) : (
+                      <button className="btn btn-danger" onClick={() => setShowDisable(true)}>
+                        Disable 2FA
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    {!showSetup ? (
+                      <button className="btn btn-primary" onClick={handleSetup2FA} disabled={mfaLoading}>
+                        {mfaLoading ? 'Loading Setup...' : 'Enable 2FA'}
+                      </button>
+                    ) : (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', background: 'rgba(79, 70, 229, 0.05)', border: '1px solid rgba(79, 70, 229, 0.2)', padding: '1.5rem', borderRadius: '12px', marginTop: '1rem' }}>
+                        {setup2FAData && (
+                          <>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', flex: '1 1 200px' }}>
+                              <img src={setup2FAData.qrCodeDataUrl} alt="2FA QR Code" style={{ border: '4px solid white', borderRadius: '8px', width: '160px', height: '160px' }} />
+                              <span style={{ fontSize: '0.75rem', color: '#94a3b8', textAlign: 'center' }}>Scan this QR code in your Google Authenticator or Microsoft Authenticator app.</span>
+                            </div>
+                            <div style={{ flex: '2 1 300px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                              <h3 style={{ fontSize: '1rem', color: '#ffffff', margin: 0 }}>Confirm Setup</h3>
+                              <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: 0 }}>
+                                Enter the 6-digit verification code generated by your Authenticator app to finalize setup.
+                              </p>
+                              <form onSubmit={handleEnable2FA} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                <div className="form-group" style={{ margin: 0 }}>
+                                  <input
+                                    type="text"
+                                    value={verificationCode}
+                                    onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                    className="form-input"
+                                    placeholder="000000"
+                                    required
+                                    style={{ letterSpacing: '0.25em', textAlign: 'center', fontSize: '1.1rem', fontWeight: 'bold' }}
+                                    disabled={mfaLoading}
+                                  />
+                                </div>
+                                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                  <button type="submit" className="btn btn-primary" disabled={mfaLoading || verificationCode.length !== 6}>
+                                    {mfaLoading ? 'Verifying...' : 'Verify & Enable'}
+                                  </button>
+                                  <button type="button" className="btn btn-outline" style={{ borderColor: 'rgba(255,255,255,0.1)', color: '#cbd5e1' }} onClick={() => { setShowSetup(false); setSetup2FAData(null); setVerificationCode(''); }}>
+                                    Cancel
+                                  </button>
+                                </div>
+                              </form>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}

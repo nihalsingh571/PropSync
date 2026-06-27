@@ -49,7 +49,11 @@ const userSchema = new mongoose.Schema({
 
   // ── Password Reset ────────────────────────────────────────────────────────────
   resetPasswordToken: { type: String, default: null },
-  resetPasswordExpires: { type: Date, default: null }
+  resetPasswordExpires: { type: Date, default: null },
+
+  // ── Two-Factor Authentication ─────────────────────────────────────────────────
+  twoFactorSecret: { type: String, default: null },
+  twoFactorEnabled: { type: Boolean, default: false }
 
 }, { timestamps: true });
 

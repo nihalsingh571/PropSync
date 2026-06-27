@@ -1,6 +1,8 @@
 // server/controllers/authController.js — PropSync v2
 import User from '../models/userModel.js';
 import jwt from 'jsonwebtoken';
+import { authenticator } from 'otplib';
+import QRCode from 'qrcode';
 
 // ── Valid roles for self-registration ─────────────────────────────────────────
 // Admins are created by the seed script or by existing admins only
@@ -75,6 +77,20 @@ export const loginUser = async (req, res) => {
 
     if (user.softDeleted) {
       return res.status(403).json({ message: 'Account no longer exists.' });
+    }
+
+    // ── 2FA Check ──
+    if (user.twoFactorEnabled) {
+      const tempToken = jwt.sign(
+        { id: user._id, require2FA: true },
+        process.env.JWT_SECRET,
+        { expiresIn: '5m' }
+      );
+      return res.json({
+        require2FA: true,
+        tempToken,
+        userId: user._id
+      });
     }
 
     // Update last active timestamp
@@ -232,5 +248,111 @@ export const resetPassword = async (req, res) => {
     return res.status(200).json({ message: 'Password reset successful' });
   } catch (err) {
     return res.status(400).json({ message: 'Invalid or expired token' });
+  }
+};
+
+// ── POST /api/auth/setup-2fa (Protected) ───────────────────────────────────────
+export const setup2FA = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const secret = authenticator.generateSecret();
+    const otpauthUrl = authenticator.keyuri(user.email, 'PropSync', secret);
+    const qrCodeDataUrl = await QRCode.toDataURL(otpauthUrl);
+
+    user.twoFactorSecret = secret;
+    await user.save({ validateBeforeSave: false });
+
+    return res.json({ secret, qrCodeDataUrl });
+  } catch (error) {
+    console.error('Setup 2FA error:', error);
+    return res.status(500).json({ message: '2FA setup failed', error: error.message });
+  }
+};
+
+// ── POST /api/auth/enable-2fa (Protected) ──────────────────────────────────────
+export const enable2FA = async (req, res) => {
+  try {
+    const { code } = req.body;
+    if (!code) return res.status(400).json({ message: 'Verification code is required' });
+
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user.twoFactorSecret) return res.status(400).json({ message: '2FA not set up' });
+
+    const isValid = authenticator.verify({ token: code, secret: user.twoFactorSecret });
+    if (!isValid) {
+      return res.status(400).json({ message: 'Invalid verification code' });
+    }
+
+    user.twoFactorEnabled = true;
+    await user.save({ validateBeforeSave: false });
+
+    return res.json({ message: 'Google Authenticator enabled successfully' });
+  } catch (error) {
+    console.error('Enable 2FA error:', error);
+    return res.status(500).json({ message: 'Failed to enable 2FA', error: error.message });
+  }
+};
+
+// ── POST /api/auth/disable-2fa (Protected) ─────────────────────────────────────
+export const disable2FA = async (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password) return res.status(400).json({ message: 'Password is required to disable 2FA' });
+
+    const user = await User.findById(req.user._id).select('+password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) return res.status(401).json({ message: 'Invalid password' });
+
+    user.twoFactorEnabled = false;
+    user.twoFactorSecret = null;
+    await user.save({ validateBeforeSave: false });
+
+    return res.json({ message: 'Google Authenticator disabled successfully' });
+  } catch (error) {
+    console.error('Disable 2FA error:', error);
+    return res.status(500).json({ message: 'Failed to disable 2FA', error: error.message });
+  }
+};
+
+// ── POST /api/auth/verify-2fa (Public) ─────────────────────────────────────────
+export const verify2FA = async (req, res) => {
+  try {
+    const { code, tempToken } = req.body;
+    if (!code || !tempToken) {
+      return res.status(400).json({ message: 'Code and tempToken are required' });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(tempToken, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({ message: 'Invalid or expired session token' });
+    }
+
+    if (!decoded.require2FA) {
+      return res.status(400).json({ message: 'Invalid token request type' });
+    }
+
+    const user = await User.findById(decoded.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user.twoFactorSecret) return res.status(400).json({ message: '2FA not configured' });
+
+    const isValid = authenticator.verify({ token: code, secret: user.twoFactorSecret });
+    if (!isValid) {
+      return res.status(400).json({ message: 'Invalid verification code' });
+    }
+
+    user.lastActive = new Date();
+    await user.save({ validateBeforeSave: false });
+
+    return res.json(buildUserResponse(user, generateToken(user._id)));
+  } catch (error) {
+    console.error('Verify 2FA error:', error);
+    return res.status(500).json({ message: 'Verification failed', error: error.message });
   }
 };

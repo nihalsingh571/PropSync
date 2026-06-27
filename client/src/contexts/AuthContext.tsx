@@ -13,6 +13,7 @@ export interface User {
   profileImage: string | null;
   roles: PropSyncRole[];
   isAdmin: boolean;
+  twoFactorEnabled?: boolean;
 }
 
 // ── Role Helpers (used across the app) ────────────────────────────────────────
@@ -57,7 +58,8 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   token: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<{ require2FA?: boolean; tempToken?: string } | void>;
+  verify2FA: (code: string, tempToken: string) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
   logout: () => void;
   updateUser: (updates: Partial<User>) => void;
@@ -90,7 +92,8 @@ const normalizeUser = (data: any): User => {
     phone: data.phone ?? null,
     profileImage: data.profileImage ?? null,
     roles,
-    isAdmin: roles.includes('admin')
+    isAdmin: roles.includes('admin'),
+    twoFactorEnabled: data.twoFactorEnabled ?? false
   };
 };
 
@@ -128,14 +131,32 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // ── Login ───────────────────────────────────────────────────────────────────
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = async (email: string, password: string): Promise<{ require2FA?: boolean; tempToken?: string } | void> => {
     setLoading(true);
     try {
       const { data } = await api.post('/auth/login', { email, password });
+      if (data.require2FA) {
+        return { require2FA: true, tempToken: data.tempToken };
+      }
       const { token: newToken, ...userData } = data;
       persist(newToken, userData);
     } catch (error: any) {
       const msg = error.response?.data?.message ?? 'Login failed. Please try again.';
+      throw new Error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── Verify 2FA ──────────────────────────────────────────────────────────────
+  const verify2FA = async (code: string, tempToken: string): Promise<void> => {
+    setLoading(true);
+    try {
+      const { data } = await api.post('/auth/verify-2fa', { code, tempToken });
+      const { token: newToken, ...userData } = data;
+      persist(newToken, userData);
+    } catch (error: any) {
+      const msg = error.response?.data?.message ?? 'Verification failed.';
       throw new Error(msg);
     } finally {
       setLoading(false);
@@ -182,7 +203,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, token, login, register, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, loading, token, login, verify2FA, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
