@@ -132,7 +132,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // ── Login ───────────────────────────────────────────────────────────────────
   const login = async (email: string, password: string): Promise<{ require2FA?: boolean; tempToken?: string } | void> => {
-    setLoading(true);
     try {
       const { data } = await api.post('/auth/login', { email, password });
       if (data.require2FA) {
@@ -143,14 +142,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (error: any) {
       const msg = error.response?.data?.message ?? 'Login failed. Please try again.';
       throw new Error(msg);
-    } finally {
-      setLoading(false);
     }
   };
 
   // ── Verify 2FA ──────────────────────────────────────────────────────────────
   const verify2FA = async (code: string, tempToken: string): Promise<void> => {
-    setLoading(true);
     try {
       const { data } = await api.post('/auth/verify-2fa', { code, tempToken });
       const { token: newToken, ...userData } = data;
@@ -158,14 +154,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (error: any) {
       const msg = error.response?.data?.message ?? 'Verification failed.';
       throw new Error(msg);
-    } finally {
-      setLoading(false);
     }
   };
 
   // ── Register ────────────────────────────────────────────────────────────────
   const register = async (payload: RegisterPayload): Promise<void> => {
-    setLoading(true);
     try {
       const { data } = await api.post('/auth/register', payload);
       const { token: newToken, ...userData } = data;
@@ -179,8 +172,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         message = serverMsg;
       }
       throw new Error(message);
-    } finally {
-      setLoading(false);
     }
   };
 
