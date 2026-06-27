@@ -3,6 +3,8 @@ import User from '../models/userModel.js';
 import jwt from 'jsonwebtoken';
 import { authenticator } from 'otplib';
 import QRCode from 'qrcode';
+import OtpVerification from '../models/otpVerificationModel.js';
+import { sendVerificationOTPEmail } from '../services/emailService.js';
 
 // ── Valid roles for self-registration ─────────────────────────────────────────
 // Admins are created by the seed script or by existing admins only
@@ -24,26 +26,74 @@ const buildUserResponse = (user, token) => ({
   token
 });
 
+// ── POST /api/auth/send-register-otp ───────────────────────────────────────────
+export const sendRegisterOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+
+    const emailClean = email.toLowerCase().trim();
+
+    // Check if user already exists
+    const userExists = await User.findOne({ email: emailClean });
+    if (userExists) {
+      return res.status(400).json({ message: 'An account with this email already exists.' });
+    }
+
+    // Generate random 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+
+    // Upsert verification code
+    await OtpVerification.findOneAndUpdate(
+      { email: emailClean },
+      { otp, expiresAt },
+      { upsert: true, new: true }
+    );
+
+    // Send email
+    await sendVerificationOTPEmail(emailClean, otp);
+
+    return res.status(200).json({ message: 'Verification code sent to your email' });
+  } catch (error) {
+    console.error('Send register OTP error:', error);
+    return res.status(500).json({ message: 'Failed to send verification code', error: error.message });
+  }
+};
+
 // ── POST /api/auth/register ────────────────────────────────────────────────────
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password, phone, role } = req.body;
+    const { name, email, password, phone, role, otp } = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Name, email, and password are required' });
+    if (!name || !email || !password || !otp) {
+      return res.status(400).json({ message: 'Name, email, password, and OTP are required' });
+    }
+
+    const emailClean = email.toLowerCase().trim();
+
+    // Verify OTP
+    const verification = await OtpVerification.findOne({ email: emailClean });
+    if (!verification || verification.otp !== otp || verification.expiresAt < new Date()) {
+      return res.status(400).json({ message: 'Invalid or expired verification code' });
     }
 
     // Determine role — default to 'tenant' if not provided or invalid
     const assignedRole = SELF_REGISTER_ROLES.includes(role) ? role : 'tenant';
 
-    const userExists = await User.findOne({ email: email.toLowerCase() });
+    const userExists = await User.findOne({ email: emailClean });
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
+    // Delete verification record
+    await OtpVerification.deleteOne({ email: emailClean });
+
     const user = await User.create({
       name: name.trim(),
-      email: email.toLowerCase().trim(),
+      email: emailClean,
       password,
       phone: phone || null,
       roles: [assignedRole]

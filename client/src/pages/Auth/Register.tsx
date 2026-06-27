@@ -30,7 +30,7 @@ const ROLE_OPTIONS: { value: PropSyncRole; label: string; icon: string; desc: st
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register, sendRegisterOTP } = useAuth();
   const { showToast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -45,7 +45,8 @@ const Register: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [step, setStep] = useState<1 | 2>(1); // Step 1: role selection, Step 2: details
+  const [step, setStep] = useState<1 | 2 | 3>(1); // Step 1: role, Step 2: email verification, Step 3: details + otp
+  const [otpCode, setOtpCode] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -59,11 +60,32 @@ const Register: React.FC = () => {
   const goToStep2 = () => setStep(2);
   const goToStep1 = () => setStep(1);
 
+  const handleSendOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.email.trim()) {
+      setError('Email is required');
+      return;
+    }
+    setError('');
+    setLoading(true);
+    try {
+      await sendRegisterOTP(formData.email.trim());
+      showToast('Verification code sent to your email', 'success');
+      setStep(3);
+    } catch (err: any) {
+      setError(err.message);
+      showToast(err.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const validateForm = (): boolean => {
     if (!formData.name.trim()) { setError('Full name is required'); return false; }
     if (!formData.email.trim()) { setError('Email is required'); return false; }
     if (formData.password.length < 6) { setError('Password must be at least 6 characters'); return false; }
     if (formData.password !== formData.confirmPassword) { setError('Passwords do not match'); return false; }
+    if (!otpCode.trim() || otpCode.length !== 6) { setError('6-digit verification code is required'); return false; }
     return true;
   };
 
@@ -79,7 +101,8 @@ const Register: React.FC = () => {
         email: formData.email.trim(),
         password: formData.password,
         phone: formData.phone.trim() || undefined,
-        role: formData.role
+        role: formData.role,
+        otp: otpCode.trim()
       };
       await register(payload);
       showToast('Account created successfully! Welcome to PropSync.', 'success');
@@ -122,6 +145,11 @@ const Register: React.FC = () => {
             <div className="auth-step__line"></div>
             <div className={`auth-step ${step >= 2 ? 'active' : ''}`}>
               <div className="auth-step__dot">2</div>
+              <span>Verify Email</span>
+            </div>
+            <div className="auth-step__line"></div>
+            <div className={`auth-step ${step >= 3 ? 'active' : ''}`}>
+              <div className="auth-step__dot">3</div>
               <span>Your Details</span>
             </div>
           </div>
@@ -156,9 +184,9 @@ const Register: React.FC = () => {
             </div>
           )}
 
-          {/* ── Step 2: Account Details ────────────────────────────────────── */}
+          {/* ── Step 2: Email Verification OTP ─────────────────────────────── */}
           {step === 2 && (
-            <form onSubmit={handleSubmit} className="auth-form" noValidate>
+            <form onSubmit={handleSendOTP} className="auth-form" noValidate>
               {error && (
                 <div className="auth-error-box">
                   <span className="auth-error-icon">⚠️</span>
@@ -174,22 +202,6 @@ const Register: React.FC = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="reg-name" className="form-label">Full Name</label>
-                <input
-                  type="text"
-                  id="reg-name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="form-input"
-                  placeholder="Your full name"
-                  required
-                  disabled={loading}
-                  autoComplete="name"
-                />
-              </div>
-
-              <div className="form-group">
                 <label htmlFor="reg-email" className="form-label">Email Address</label>
                 <input
                   type="email"
@@ -202,6 +214,83 @@ const Register: React.FC = () => {
                   required
                   disabled={loading}
                   autoComplete="email"
+                />
+              </div>
+
+              <div className="auth-form-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={goToStep1}
+                  disabled={loading}
+                >
+                  ← Back
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary auth-submit-btn"
+                  disabled={loading || !formData.email}
+                >
+                  {loading ? (
+                    <><div className="btn-spinner"></div>Sending Code...</>
+                  ) : 'Send Verification Code →'}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* ── Step 3: Account Details ────────────────────────────────────── */}
+          {step === 3 && (
+            <form onSubmit={handleSubmit} className="auth-form" noValidate>
+              {error && (
+                <div className="auth-error-box">
+                  <span className="auth-error-icon">⚠️</span>
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {/* Selected role badge */}
+              <div className="selected-role-badge">
+                <span>{selectedRoleData?.icon}</span>
+                <span>{selectedRoleData?.label}</span>
+                <span style={{ fontSize: '0.8rem', color: '#94a3b8', marginLeft: 'auto' }}>{formData.email}</span>
+                <button type="button" onClick={goToStep2} className="change-role-btn" style={{ marginLeft: '0.5rem' }}>Edit Email</button>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="reg-otp" className="form-label" style={{ color: '#818cf8', fontWeight: 'bold' }}>Verification Code (Sent to Email)</label>
+                <input
+                  type="text"
+                  id="reg-otp"
+                  name="otpCode"
+                  value={otpCode}
+                  onChange={e => {
+                    setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6));
+                    if (error) setError('');
+                  }}
+                  className="form-input"
+                  placeholder="000000"
+                  required
+                  pattern="[0-9]{6}"
+                  inputMode="numeric"
+                  disabled={loading}
+                  style={{ letterSpacing: '0.25em', textAlign: 'center', fontSize: '1.2rem', fontWeight: 'bold' }}
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="reg-name" className="form-label">Full Name</label>
+                <input
+                  type="text"
+                  id="reg-name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="form-input"
+                  placeholder="Your full name"
+                  required
+                  disabled={loading}
+                  autoComplete="name"
                 />
               </div>
 
@@ -280,7 +369,7 @@ const Register: React.FC = () => {
                 <button
                   type="button"
                   className="btn btn-secondary"
-                  onClick={goToStep1}
+                  onClick={goToStep2}
                   disabled={loading}
                 >
                   ← Back
@@ -288,7 +377,7 @@ const Register: React.FC = () => {
                 <button
                   type="submit"
                   className="btn btn-primary auth-submit-btn"
-                  disabled={loading}
+                  disabled={loading || otpCode.length !== 6 || !formData.name || !formData.password}
                 >
                   {loading ? (
                     <><div className="btn-spinner"></div>Creating Account...</>

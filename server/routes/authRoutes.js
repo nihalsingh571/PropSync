@@ -11,7 +11,8 @@ import {
   setup2FA,
   enable2FA,
   disable2FA,
-  verify2FA
+  verify2FA,
+  sendRegisterOTP
 } from '../controllers/authController.js';
 import { protect, admin } from '../middleware/protect.js';
 
@@ -19,6 +20,7 @@ const router = express.Router();
 
 // ── Public Routes ─────────────────────────────────────────────────────────────
 router.post('/register', registerUser);
+router.post('/send-register-otp', sendRegisterOTP);
 router.post('/login', loginUser);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);

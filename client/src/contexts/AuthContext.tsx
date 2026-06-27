@@ -52,6 +52,7 @@ export interface RegisterPayload {
   password: string;
   phone?: string;
   role?: PropSyncRole;
+  otp: string;
 }
 
 interface AuthContextType {
@@ -60,6 +61,7 @@ interface AuthContextType {
   token: string | null;
   login: (email: string, password: string) => Promise<{ require2FA?: boolean; tempToken?: string } | void>;
   verify2FA: (code: string, tempToken: string) => Promise<void>;
+  sendRegisterOTP: (email: string) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
   logout: () => void;
   updateUser: (updates: Partial<User>) => void;
@@ -157,6 +159,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // ── Send Register OTP ────────────────────────────────────────────────────────
+  const sendRegisterOTP = async (email: string): Promise<void> => {
+    try {
+      await api.post('/auth/send-register-otp', { email });
+    } catch (error: any) {
+      const msg = error.response?.data?.message ?? 'Failed to send verification code.';
+      throw new Error(msg);
+    }
+  };
+
   // ── Register ────────────────────────────────────────────────────────────────
   const register = async (payload: RegisterPayload): Promise<void> => {
     try {
@@ -194,7 +206,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, token, login, verify2FA, register, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, loading, token, login, verify2FA, sendRegisterOTP, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
