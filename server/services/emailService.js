@@ -2,8 +2,12 @@ import sgMail from '@sendgrid/mail';
 import fs from 'fs';
 import path from 'path';
 
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
-const EMAIL_FROM = process.env.EMAIL_FROM || 'no-reply@neighborfit.app';
+let SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+if (SENDGRID_API_KEY) {
+  SENDGRID_API_KEY = SENDGRID_API_KEY.replace(/['"\s\r\n]/g, '').trim();
+}
+
+const EMAIL_FROM = (process.env.EMAIL_FROM || 'no-reply@neighborfit.app').replace(/['"\s\r\n]/g, '').trim();
 const CLIENT_URL = process.env.CLIENT_URL || process.env.VITE_API_URL || 'http://localhost:5173';
 
 if (SENDGRID_API_KEY) {
